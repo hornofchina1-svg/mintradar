@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS kontrak (
 CREATE TABLE IF NOT EXISTS minit (alamat TEXT, minit_ts INTEGER, mint INTEGER, penerima INTEGER, PRIMARY KEY (alamat, minit_ts));
 CREATE TABLE IF NOT EXISTS sampel (alamat TEXT, tx TEXT, penerima TEXT, bil INTEGER, PRIMARY KEY (alamat, tx));
 CREATE TABLE IF NOT EXISTS jualan (alamat TEXT, tx TEXT, ts INTEGER, harga_bnb REAL, PRIMARY KEY (alamat, tx));
+CREATE TABLE IF NOT EXISTS penerima (alamat TEXT, penerima TEXT, minit_ts INTEGER, PRIMARY KEY (alamat, penerima));
+CREATE INDEX IF NOT EXISTS penerima_ts ON penerima (alamat, minit_ts);
 CREATE TABLE IF NOT EXISTS semakan (alamat TEXT PRIMARY KEY, ts INTEGER, label TEXT, temuan TEXT, admin TEXT, nama_kontrak TEXT);
 CREATE INDEX IF NOT EXISTS minit_ts ON minit (minit_ts);
 CREATE INDEX IF NOT EXISTS kontrak_panas ON kontrak (ts_panas);

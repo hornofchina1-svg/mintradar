@@ -91,6 +91,14 @@
     });
     if (data.semakan_24j) document.getElementById("semakan-baris").textContent = t("semakan_baris", data.semakan_24j);
 
+    var tp = data.tumpuan_24j;
+    if (tp && tp.bil_kedudukan) {
+      var lain = tp.bersih_semua_bnb - tp.untung_teratas_bnb;
+      document.getElementById("tumpuan").textContent = t("tumpuan_baris", {
+        n: tp.n_teratas, teratas: tp.untung_teratas_bnb.toFixed(4), semua: tp.bersih_semua_bnb.toFixed(4),
+        baki: tp.bil_kedudukan - tp.n_teratas, lain: (lain >= 0 ? "+" : "\u2212") + Math.abs(lain).toFixed(4)
+      });
+    }
     var masa = new Date(data.dijana * 1000).toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
     kaki.textContent = t("kaki_dijana", { masa: masa, blok: data.blok.toLocaleString(bahasa) });
   }

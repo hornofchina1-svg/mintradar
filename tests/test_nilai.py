@@ -22,6 +22,10 @@ class Kelas(unittest.TestCase):
         k, h = nilai.kelaskan([s("0xa", "0xa", int(0.002e18), 2)], CFG["kelas"])
         self.assertEqual((k, h), (nilai.KELAS_BERBAYAR, 0.001))
 
+    def test_bayaran_usdt_dalam_resit_bukan_percuma(self):
+        sampel = [dict(s("0xa", "0xa"), token_bnb=0.0013), dict(s("0xb", "0xb"), token_bnb=0.0013)]
+        self.assertEqual(nilai.kelaskan(sampel, CFG["kelas"])[0], nilai.KELAS_BERBAYAR)
+
     def test_mahal(self):
         self.assertEqual(nilai.kelaskan([s("0xa", "0xa", int(0.05e18))], CFG["kelas"])[0], nilai.KELAS_MAHAL)
 

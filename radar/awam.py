@@ -33,6 +33,11 @@ def bina(con, cfg, sekarang):
     siap24 = sorted((x for x in semua if x["pnl"][24] is not None), key=lambda x: -x["pnl"][24][0])
     teratas = [{"nama": x["nama"], "alamat": x["alamat"], "bersih_bnb": round(x["pnl"][24][0], 6), "jualan": x["pnl"][24][2]}
                for x in siap24[:5] if x["pnl"][24][0] > 0]
+    # Tumpuan (cadangan @orane di Boltbook): berapa peratus untung kertas 24 j datang dari 4 teratas
+    positif = [x["pnl"][24][0] for x in siap24 if x["pnl"][24][0] > 0]
+    jumlah_24 = sum(x["pnl"][24][0] for x in siap24)
+    tumpuan = {"n_teratas": min(4, len(positif)), "untung_teratas_bnb": round(sum(positif[:4]), 6),
+               "bersih_semua_bnb": round(jumlah_24, 6), "bil_kedudukan": len(siap24)}
     hari = con.execute("""SELECT COUNT(*), SUM(kelas='mint_percuma'), SUM(kelas='airdrop') FROM kontrak
                           WHERE diperiksa=1 AND ts_panas >= ?""", (sekarang - 86400,)).fetchone()
     amaran = []
@@ -50,6 +55,7 @@ def bina(con, cfg, sekarang):
         "hari": {"panas": hari[0] or 0, "percuma": hari[1] or 0, "airdrop": hari[2] or 0},
         "kertas": kertas,
         "teratas_24j": teratas,
+        "tumpuan_24j": tumpuan,
         "terbaru": baru,
         "andaian": {"yuran": k["yuran_pasaran"], "gas_mint": k["gas_mint"]},
     }
@@ -154,6 +160,13 @@ def render_html(data, templat, bahasa):
     teratas = "".join(
         f'<li><span class="nama-koleksi">{e(w["nama"] or w["alamat"])}</span><span class="bersih positif">{bnb(w["bersih_bnb"])}</span>'
         f'<span class="butir">{e(t["teratas_jualan"].replace("{n}", str(w["jualan"])))}</span></li>' for w in data["teratas_24j"])
+    tp = data.get("tumpuan_24j") or {}
+    if tp.get("bil_kedudukan"):
+        lain = tp["bersih_semua_bnb"] - tp["untung_teratas_bnb"]
+        teks_tp = (t["tumpuan_baris"].replace("{n}", str(tp["n_teratas"])).replace("{teratas}", f"{tp['untung_teratas_bnb']:.4f}")
+                   .replace("{semua}", f"{tp['bersih_semua_bnb']:.4f}").replace("{baki}", str(tp["bil_kedudukan"] - tp["n_teratas"]))
+                   .replace("{lain}", ("+" if lain >= 0 else "\u2212") + f"{abs(lain):.4f}"))
+        templat = templat.replace('<p id="tumpuan" class="ket"></p>', f'<p id="tumpuan" class="ket">{e(teks_tp)}</p>')
     masa = time.strftime("%d %b %Y %H:%M UTC", time.gmtime(sekarang))
     out = templat.replace('<tbody id="senarai-sentuhan"></tbody>', f'<tbody id="senarai-sentuhan">{baris}</tbody>')
     out = out.replace('<dl id="senarai-kertas" class="tetingkap"></dl>', f'<dl id="senarai-kertas" class="tetingkap">{kertas}</dl>')

@@ -81,6 +81,8 @@ class Pengimbas:
             c.execute("""INSERT INTO minit VALUES (?,?,?,?) ON CONFLICT(alamat, minit_ts)
                          DO UPDATE SET mint=mint+excluded.mint, penerima=penerima+excluded.penerima""", (a, minit, m, len(pen)))
             c.execute("UPDATE kontrak SET jumlah_mint=jumlah_mint+? WHERE alamat=?", (m, a))
+            c.executemany("""INSERT INTO penerima VALUES (?,?,?) ON CONFLICT(alamat, penerima)
+                             DO UPDATE SET minit_ts=MAX(minit_ts, excluded.minit_ts)""", [(a, ke, minit) for ke in pen])
         had = self.cfg["panas"]["sampel_tx"]
         for (a, tx), bil in bil_tx.items():
             ada = c.execute("SELECT COUNT(*) FROM sampel WHERE alamat=?", (a,)).fetchone()[0]
@@ -94,8 +96,12 @@ class Pengimbas:
         calon = self.con.execute("""
             SELECT m.alamat, SUM(m.mint) FROM minit m JOIN kontrak k ON k.alamat=m.alamat
             WHERE (k.diperiksa=0 OR k.ts_panas > ?) AND m.minit_ts BETWEEN ? AND ? GROUP BY m.alamat
-            HAVING SUM(m.mint) >= ? AND SUM(m.penerima) >= ?""",
-            (sekarang, sekarang - p["tetingkap_minit"] * 60, sekarang, p["mint_min"], p["penerima_min"])).fetchall()
+            HAVING SUM(m.mint) >= ?
+               AND (SELECT COUNT(*) FROM penerima r WHERE r.alamat=m.alamat AND r.minit_ts BETWEEN ? AND ?) >= ?""",
+            # penerima = KESATUAN (kontrak, penerima) dalam tetingkap, bukan jumlah set per minit: 2 wallet × 10 minit
+            # dahulu dikira 20 penerima (dilaporkan @jpl di Boltbook, 29 Okt)
+            (sekarang, sekarang - p["tetingkap_minit"] * 60, sekarang, p["mint_min"],
+             sekarang - p["tetingkap_minit"] * 60, sekarang, p["penerima_min"])).fetchall()
         if not calon:
             return
         kerja = [(a, self.con.execute("SELECT tx, penerima, bil FROM sampel WHERE alamat=?", (a,)).fetchall()) for a, _ in calon]
@@ -138,10 +144,17 @@ class Pengimbas:
         """Rangkaian sahaja (selamat dalam benang): tx sampel → kelas; nama/simbol bila bukan airdrop."""
         sampel = []
         try:
+            if self._bnb_usd is None:
+                self._bnb_usd = harga_bnb_usd(self.cfg)
+            token = {k: v for k, v in self.cfg["token_bayaran"].items() if k.startswith("0x")}
             for tx, penerima, bil in sampel_db:
                 t = self.rpc.tx(tx)
                 if t:
-                    sampel.append({"dari": t["from"], "penerima": penerima, "nilai_wei": int(t["value"], 16), "bil": bil})
+                    # value 0 ≠ percuma: mint boleh menarik USDT/USDC/WBNB dari pemint (dilaporkan @jpl) → baca resit
+                    resit = self.rpc.resit(tx)
+                    token_bnb = nilai.bayaran_token_bnb(t["from"], resit, token, self._bnb_usd)
+                    sampel.append({"dari": t["from"], "penerima": penerima, "nilai_wei": int(t["value"], 16), "bil": bil,
+                                   "token_bnb": token_bnb})
         except RpcGagal:
             return alamat, None
         kelas, harga = nilai.kelaskan(sampel, self.cfg["kelas"])
@@ -198,6 +211,7 @@ class Pengimbas:
         """Buang kiraan minit lama + kontrak sampah (tidak pernah panas) > 3 hari supaya DB kecil."""
         had = sekarang - 3 * 86400
         self.con.execute("DELETE FROM minit WHERE minit_ts < ?", (had,))
+        self.con.execute("DELETE FROM penerima WHERE minit_ts < ?", (sekarang - 86400,))
         self.con.execute("DELETE FROM sampel WHERE alamat IN (SELECT alamat FROM kontrak WHERE diperiksa=0 AND ts_pertama < ?)", (had,))
         self.con.execute("DELETE FROM kontrak WHERE diperiksa=0 AND ts_pertama < ?", (had,))
         self.con.commit()

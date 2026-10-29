@@ -20,12 +20,24 @@ def kelaskan(sampel, cfg_kelas):
     sendiri = sum(1 for s in sampel if s["dari"].lower() == s["penerima"].lower()) / len(sampel)
     if sendiri < cfg_kelas["nisbah_mint_sendiri_min"]:
         return KELAS_AIRDROP, None
-    harga = median(s["nilai_wei"] / max(1, s["bil"]) for s in sampel) / 1e18
+    harga = median((s["nilai_wei"] / 1e18 + s.get("token_bnb", 0.0)) / max(1, s["bil"]) for s in sampel)
     if harga == 0:
         return KELAS_PERCUMA, 0.0
     if harga <= cfg_kelas["harga_mint_maks_bnb"]:
         return KELAS_BERBAYAR, harga
     return KELAS_MAHAL, harga
+
+
+def bayaran_token_bnb(pemint, resit, token_bayaran, bnb_usd):
+    """Jumlah USDT/USDC/WBNB yang KELUAR dari pemint dalam resit mint, dalam BNB. 0 = tiada bayaran token."""
+    pemint = pemint.lower()
+    jumlah = 0.0
+    for l in (resit or {}).get("logs", []):
+        t = token_bayaran.get(l["address"].lower())
+        if t and len(l["topics"]) == 3 and l["topics"][0] == TRANSFER and "0x" + l["topics"][1][-40:] == pemint:
+            amaun = int(l["data"], 16) / 1e18
+            jumlah += amaun / bnb_usd if t.get("usd") else amaun
+    return jumlah
 
 
 def kos_masuk(harga_bnb, harga_gas_wei, cfg_kertas):
