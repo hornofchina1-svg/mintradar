@@ -44,6 +44,13 @@ def analisis(sumber_fail, abi, owner=None, impl=None):
     owner_hidup = owner is not None and int(owner, 16) != 0
     tulis = sorted({f["name"] for f in abi if f.get("type") == "function"
                     and f.get("stateMutability") in ("nonpayable", "payable") and f["name"] not in STANDARD})
+    # Fungsi PENGAWAL dalaman (cth `_onlyTreasury()` dalam VeltrionMint) — fungsi tulis yang memanggilnya mewarisi siapa
+    # boleh memanggil. Tanpa ini, kawalan tidak langsung terlepas dan kontrak berkuasa dilabel hijau (diukur 29 Okt, $VARC).
+    pengawal = {}
+    for m in re.finditer(r"function\s+(_\w+)\s*\([^)]*\)[^{;]*\{", semua):
+        p = [a or b for a, b in PENGIRIM.findall(_badan(semua, m.start()))]
+        if p:
+            pengawal[m.group(1)] = p
     temuan, admin = [], []
     if impl and int(impl, 16) != 0:
         temuan.append({"kod": "PROKSI", "fungsi": None})
@@ -53,6 +60,8 @@ def analisis(sumber_fail, abi, owner=None, impl=None):
             continue
         kepala, badan = m.group(2), _badan(semua, m.start())
         pengirim = [a or b for a, b in PENGIRIM.findall(badan)]
+        for g in re.findall(r"\b(_\w+)\s*\(", badan + kepala):
+            pengirim += pengawal.get(g, [])
         berkuasa = bool(MODIFIER_KUASA.search(kepala)) or bool(pengirim) or "_checkOwner" in badan
         if not berkuasa:
             continue

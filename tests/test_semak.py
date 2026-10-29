@@ -45,6 +45,21 @@ class Semak(unittest.TestCase):
                            [{"type": "function", "name": "setX", "stateMutability": "nonpayable"}], owner="0x" + "1" * 40)
         self.assertEqual(h["admin"], [])
 
+    def test_pengawal_dalaman_immutable(self):
+        sumber = """
+        contract V {
+            address public immutable treasury;
+            function _onlyTreasury() private view { if (msg.sender != treasury) revert(); }
+            function setPaused(bool x) external { _onlyTreasury(); paused = x; }
+            function seed() external { _onlyTreasury(); usdt.transfer(treasury, 1); }
+        }"""
+        abi = [{"type": "function", "name": n, "stateMutability": "nonpayable"} for n in ("setPaused", "seed")]
+        h = semak.analisis({"V.sol": sumber}, abi)
+        kod = {(t["kod"], t["fungsi"]) for t in h["temuan"]}
+        self.assertIn(("KEKAL_KUASA", "setPaused"), kod)
+        self.assertIn(("KEKAL_DANA", "seed"), kod)
+        self.assertEqual(h["label"], "merah")
+
 
 if __name__ == "__main__":
     unittest.main()

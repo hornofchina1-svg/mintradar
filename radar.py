@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-from radar import awam, db, isi_belakang, laporan
+from radar import awam, db, isi_belakang, laporan, semak
 from radar.imbas import Pengimbas
 from radar.rpc import Rpc
 
@@ -53,6 +53,13 @@ def main(argv):
     elif arahan == "awam":  # stats.json untuk datt.my (data radar sahaja, tiada wallet/enjin)
         d = awam.tulis(con, c, AKAR / "hidup" / "data", rpc)
         print(f"stats.json: {len(d['terbaru'])} sentuhan, kertas {[x['bersih_bnb'] for x in d['kertas']]}")
+    elif arahan == "semak":  # radar.py semak <address…> — safety check any contract (lands in the public API on the next awam run)
+        for a in [x.lower() for x in argv[2:] if x.startswith("0x")]:
+            h = semak.semak(rpc, a)
+            con.execute("INSERT OR REPLACE INTO semakan VALUES (?,?,?,?,?,?)",
+                        (a, int(time.time()), h["label"], json.dumps(h["temuan"]), json.dumps(h["admin"]), h.get("nama_kontrak")))
+            con.commit()
+            print(" ", a, h["label"], h.get("nama_kontrak"), [(x["kod"], x["fungsi"]) for x in h["temuan"]][:5])
     elif arahan == "laporan":
         teks = laporan.tulis(con, c, int(time.time()))
         print(teks)

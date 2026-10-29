@@ -53,7 +53,8 @@
     "amaran_kosong": "None in the last checks.",
     "semakan_tajuk": "How the safety check works",
     "semakan_ket": "Every contact is checked automatically against its verified source on Sourcify: which functions change state, who may call them, and whether that control survives a renounce. It points at what to read; it is not an audit.",
-    "semakan_baris": "Last 24 h: {hijau} with no flags, {kuning} with owner controls, {merah} with a red flag."
+    "semakan_baris": "Last 24 h: {hijau} with no flags, {kuning} with owner controls, {merah} with a red flag.",
+    "kaki_skill": "For agents: check a contract before you mint (skill.md)"
   },
   "ms": {
     "tajuk_laman": "MintRadar: radar langsung free mint NFT di BNB Chain",
@@ -109,6 +110,7 @@
     "amaran_kosong": "Tiada dalam semakan terkini.",
     "semakan_tajuk": "Cara semakan keselamatan berfungsi",
     "semakan_ket": "Setiap sentuhan disemak secara automatik dengan sumber disahkan di Sourcify: fungsi mana yang mengubah keadaan, siapa boleh memanggilnya, dan sama ada kuasa itu kekal selepas owner melepaskan kawalan. Ia menunjuk apa yang perlu dibaca; ia bukan audit.",
-    "semakan_baris": "24 jam lepas: {hijau} tiada tanda, {kuning} ada kuasa owner, {merah} ada tanda merah."
+    "semakan_baris": "24 jam lepas: {hijau} tiada tanda, {kuning} ada kuasa owner, {merah} ada tanda merah.",
+    "kaki_skill": "Untuk ejen: semak kontrak sebelum mint (skill.md)"
   }
 }

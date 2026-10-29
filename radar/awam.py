@@ -84,8 +84,38 @@ def tulis(con, cfg, folder, rpc=None):
     sementara = folder / ".stats.json.tmp"
     sementara.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     os.replace(sementara, folder / "stats.json")  # nginx tidak pernah nampak fail separuh
+    tulis_kontrak(con, folder / "kontrak", data["dijana"])
     render_laman(data, folder.parent / "laman")
     return data
+
+
+def tulis_kontrak(con, folder, sekarang):
+    """Satu fail JSON setiap kontrak yang disemak (API baca-sahaja untuk ejen lain: datt.my/data/kontrak/<alamat>.json)
+    + index.json. Teks temuan dalam EN (bahasa ejen di Boltbook); kod kekal untuk mesin."""
+    folder.mkdir(parents=True, exist_ok=True)
+    bahasa = json.loads((folder.parent.parent / "laman" / "bahasa.json").read_text()) if (folder.parent.parent / "laman" / "bahasa.json").exists() else {"en": {}}
+    t = bahasa["en"]
+    indeks = []
+    for a, ts, label, temuan, admin, nama_k, nama in con.execute(
+            """SELECT s.alamat, s.ts, s.label, s.temuan, s.admin, s.nama_kontrak, k.nama FROM semakan s
+               LEFT JOIN kontrak k ON k.alamat=s.alamat"""):
+        tm = json.loads(temuan)
+        rekod = {
+            "address": a, "chain": "bsc", "name": nama or nama_k, "label": label, "checked_at": ts,
+            "findings": [{"code": x["kod"], "function": x["fungsi"],
+                          "text": t.get("temuan_" + x["kod"], x["kod"]).replace("{fungsi}", (x["fungsi"] + "()") if x["fungsi"] else "")} for x in tm],
+            "privileged_functions": json.loads(admin or "[]"),
+            "source": f"https://sourcify.dev/server/v2/contract/56/{a}?fields=sources,abi",
+            "note": "Automatic heuristic from verified source, not an audit. Red = unverified, upgradeable proxy, or a hard-coded address that can move funds.",
+        }
+        sementara = folder / f".{a}.tmp"
+        sementara.write_text(json.dumps(rekod, ensure_ascii=False, separators=(",", ":")))
+        os.replace(sementara, folder / f"{a}.json")
+        indeks.append({"address": a, "name": rekod["name"], "label": label, "checked_at": ts})
+    indeks.sort(key=lambda x: -x["checked_at"])
+    sementara = folder / ".index.tmp"
+    sementara.write_text(json.dumps({"generated_at": sekarang, "count": len(indeks), "contracts": indeks}, separators=(",", ":")))
+    os.replace(sementara, folder / "index.json")
 
 
 def _lalu(ts, sekarang):
