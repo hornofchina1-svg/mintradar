@@ -120,3 +120,89 @@ def semak(rpc, alamat):
     hasil = analisis(s["sumber"], s["abi"], owner, impl)
     hasil.update({"nama_kontrak": s["nama"], "padanan": s["padanan"]})
     return hasil
+
+
+def _nyahkod(jenis, hex_):
+    b = bytes.fromhex(hex_[2:]) if hex_ and len(hex_) > 2 else b""
+    if not b:
+        return None
+    if jenis.startswith("uint") or jenis.startswith("int"):
+        return str(int.from_bytes(b[:32], "big"))
+    if jenis == "bool":
+        return bool(int.from_bytes(b[:32], "big"))
+    if jenis == "address":
+        return "0x" + b[12:32].hex()
+    if jenis == "bytes32":
+        return "0x" + b[:32].hex()
+    if jenis == "string" and len(b) >= 64:
+        n = int.from_bytes(b[32:64], "big")
+        return b[64:64 + n].decode("utf-8", "replace")[:80]
+    return None
+
+
+def gambaran(rpc, alamat, abi, had=80):
+    """Semakan MENDALAM: panggil setiap fungsi view/pure TANPA input dengan satu output ringkas (harga, had, suis, treasury,
+    keeper…) dan pulangkan nilainya. Pemilih fungsi dikira dengan `keccak256` tulen di bawah (tiada pustaka)."""
+    hasil = {}
+    # nama berkaitan kuasa/dana dahulu: tanpa susunan ini `usdtKeeper` BJAGENT terkeluar dari had (diukur 29 Okt)
+    utama = re.compile(r"owner|admin|keeper|treasury|signer|guardian|importer|minter|withdraw|fee|price|cost", re.I)
+    abi = sorted(abi, key=lambda f: 0 if utama.search(f.get("name", "")) else 1)
+    for f in abi:
+        if len(hasil) >= had:
+            break
+        if (f.get("type") != "function" or f.get("inputs") or f.get("stateMutability") not in ("view", "pure")
+                or len(f.get("outputs") or []) != 1):
+            continue
+        jenis = f["outputs"][0]["type"]
+        if jenis not in ("bool", "address", "bytes32", "string") and not jenis.startswith(("uint", "int")):
+            continue
+        try:
+            r = rpc.call(alamat, "0x" + keccak256(f"{f['name']}()".encode())[:8])
+        except Exception:  # noqa: BLE001
+            continue
+        v = _nyahkod(jenis, r)
+        if v is not None:
+            hasil[f["name"]] = v
+    return hasil
+
+
+_RC = [0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000, 0x000000000000808B, 0x0000000080000001,
+       0x8000000080008081, 0x8000000000008009, 0x000000000000008A, 0x0000000000000088, 0x0000000080008009, 0x000000008000000A,
+       0x000000008000808B, 0x800000000000008B, 0x8000000000008089, 0x8000000000008003, 0x8000000000008002, 0x8000000000000080,
+       0x000000000000800A, 0x800000008000000A, 0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008]
+_ROT = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14, 27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44]
+_PI = [10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1]
+_M = (1 << 64) - 1
+
+
+def _keccakf(st):
+    for r in range(24):
+        bc = [st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20] for i in range(5)]
+        for i in range(5):
+            t = bc[(i + 4) % 5] ^ (((bc[(i + 1) % 5] << 1) | (bc[(i + 1) % 5] >> 63)) & _M)
+            for j in range(0, 25, 5):
+                st[j + i] ^= t
+        t = st[1]
+        for i in range(24):
+            j = _PI[i]
+            bc0 = st[j]
+            st[j] = ((t << _ROT[i]) | (t >> (64 - _ROT[i]))) & _M
+            t = bc0
+        for j in range(0, 25, 5):
+            row = st[j:j + 5]
+            for i in range(5):
+                st[j + i] = row[i] ^ ((~row[(i + 1) % 5]) & row[(i + 2) % 5] & _M)
+        st[0] ^= _RC[r]
+
+
+def keccak256(data):
+    """Keccak-256 Ethereum (bukan SHA3) — tiada pustaka; disahkan dengan pemilih ERC-20 yang diketahui dalam ujian."""
+    rate = 136
+    m = bytearray(data) + b"\x01" + b"\x00" * ((rate - (len(data) + 1) % rate) % rate)
+    m[-1] |= 0x80
+    st = [0] * 25
+    for off in range(0, len(m), rate):
+        for i in range(rate // 8):
+            st[i] ^= int.from_bytes(m[off + 8 * i: off + 8 * i + 8], "little")
+        _keccakf(st)
+    return b"".join(x.to_bytes(8, "little") for x in st[:4]).hex()

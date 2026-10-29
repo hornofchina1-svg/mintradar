@@ -60,6 +60,10 @@ class Semak(unittest.TestCase):
         self.assertIn(("KEKAL_DANA", "seed"), kod)
         self.assertEqual(h["label"], "merah")
 
+    def test_keccak_pemilih_diketahui(self):
+        self.assertEqual(semak.keccak256(b"transfer(address,uint256)")[:8], "a9059cbb")
+        self.assertEqual(semak.keccak256(b"")[:16], "c5d2460186f7233c")
+
 
 if __name__ == "__main__":
     unittest.main()
