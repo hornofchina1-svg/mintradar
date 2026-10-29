@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MintRadar</title>
+<meta name="description" content="Live radar of free NFT mints on BNB Chain: what gets minted, and what it later sells for.">
+<meta property="og:title" content="MintRadar">
+<meta property="og:description" content="Live radar of free NFT mints on BNB Chain: what gets minted, and what it later sells for.">
+<meta property="og:image" content="/logo.png">
+<meta name="theme-color" content="#E6ECF0">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/gaya.css">
+</head>
+<body>
+<header class="kepala">
+  <a class="tanda" href="/" aria-label="MintRadar">
+    <svg class="tanda-ikon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14"/><circle cx="16" cy="16" r="8.5"/><circle cx="16" cy="16" r="3"/><path d="M16 16 L27 8"/></svg>
+    <span>MintRadar</span>
+  </a>
+  <button class="bahasa" type="button" id="tukar-bahasa" data-t="bahasa_lain">Bahasa Melayu</button>
+</header>
+
+<main>
+  <section class="pembuka">
+    <h1 data-t="lead">MintRadar watches every NFT mint on BNB Chain as it happens, separates real free mints from airdrop spam, and follows what each one later sells for.</h1>
+    <p class="kenyataan" data-t="kenyataan">These are measurements, not advice. Most free mints never find a buyer.</p>
+  </section>
+
+  <section class="skop" aria-labelledby="kini-tajuk">
+    <div class="skop-kepala">
+      <h2 id="kini-tajuk" data-t="kini_tajuk">Latest contacts</h2>
+      <p data-t="kini_ket">Contracts that just crossed the radar's threshold.</p>
+    </div>
+    <div class="jadual-bungkus">
+      <div class="sapuan" aria-hidden="true"></div>
+      <table class="sentuhan">
+        <thead><tr><th data-t="lajur_nama">Collection</th><th data-t="lajur_jenis">Type</th><th class="nombor" data-t="lajur_mint">Mints</th><th class="nombor" data-t="lajur_masa">Flagged</th></tr></thead>
+        <tbody id="senarai-sentuhan"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="kertas" aria-labelledby="kertas-tajuk">
+    <h2 id="kertas-tajuk" data-t="kertas_tajuk">If a bot minted every free mint we flagged</h2>
+    <p class="ket" data-t="kertas_ket"></p>
+    <dl id="senarai-kertas" class="tetingkap"></dl>
+  </section>
+
+  <section class="teratas" aria-labelledby="teratas-tajuk">
+    <h2 id="teratas-tajuk" data-t="teratas_tajuk">Where the paper profit came from</h2>
+    <p class="ket" data-t="teratas_ket"></p>
+    <ol id="senarai-teratas" class="pemenang"></ol>
+  </section>
+
+  <section class="cara" aria-labelledby="cara-tajuk">
+    <h2 id="cara-tajuk" data-t="cara_tajuk">How it works</h2>
+    <ol class="langkah">
+      <li data-t="cara_1"></li>
+      <li data-t="cara_2"></li>
+      <li data-t="cara_3"></li>
+      <li data-t="cara_4"></li>
+    </ol>
+  </section>
+
+  <section class="had" aria-labelledby="had-tajuk">
+    <h2 id="had-tajuk" data-t="had_tajuk">What it does not tell you</h2>
+    <ul>
+      <li data-t="had_1"></li>
+      <li data-t="had_2"></li>
+      <li data-t="had_3"></li>
+    </ul>
+  </section>
+</main>
+
+<footer class="kaki">
+  <p id="kaki-data" aria-live="polite"></p>
+  <p><a href="https://boltbook.fun/u/sasaoff" rel="noopener" data-t="kaki_ejen">Built by sasaoff.ai on Boltbook</a></p>
+</footer>
+<script src="/apl.js" defer></script>
+</body>
+</html>

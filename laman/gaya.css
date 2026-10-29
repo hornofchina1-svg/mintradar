@@ -1,0 +1,104 @@
+/* MintRadar — carta laut kertas: kelabu-biru pucat, dakwat biru gelap, satu isyarat ambar (BNB). Satu-satunya
+   gerakan = sapuan radar sekali melintasi senarai sentuhan semasa halaman dibuka. */
+:root {
+  --latar: #E6ECF0;
+  --kertas: #F4F7F9;
+  --dakwat: #14233A;
+  --dakwat-lembut: #4A5A70;
+  --garis: #C5D0D9;
+  --isyarat: #C98B00;
+  --untung: #1F7A6B;
+  --rugi: #A2452F;
+  --lebar: 44rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --latar: #0F1A2A; --kertas: #15233A; --dakwat: #E3EAF1; --dakwat-lembut: #9DB0C4;
+    --garis: #2A3B55; --isyarat: #E5A823; --untung: #4DB8A4; --rugi: #E07A62; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --latar: #0F1A2A; --kertas: #15233A; --dakwat: #E3EAF1; --dakwat-lembut: #9DB0C4;
+  --garis: #2A3B55; --isyarat: #E5A823; --untung: #4DB8A4; --rugi: #E07A62; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--latar);
+  color: var(--dakwat);
+  font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-feature-settings: "tnum" 1;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+}
+main, .kepala, .kaki { max-width: var(--lebar); margin: 0 auto; }
+a { color: inherit; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--isyarat); outline-offset: 3px; border-radius: 4px; }
+
+.kepala { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 8px; }
+.tanda { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; text-decoration: none; letter-spacing: -0.01em; }
+.tanda-ikon { width: 28px; height: 28px; fill: none; stroke: var(--dakwat); stroke-width: 1.6; }
+.tanda-ikon path { stroke: var(--isyarat); stroke-width: 2.2; stroke-linecap: round; }
+.bahasa {
+  font: inherit; font-size: 0.9rem; color: var(--dakwat); background: transparent;
+  border: 1px solid var(--garis); border-radius: 999px; padding: 6px 14px; cursor: pointer; min-height: 40px;
+}
+.bahasa:hover { border-color: var(--dakwat-lembut); }
+
+h1 { font-size: clamp(1.45rem, 4.6vw, 2.05rem); line-height: 1.22; letter-spacing: -0.02em; font-weight: 650; margin: 28px 0 14px; max-width: 34ch; }
+h2 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 6px; letter-spacing: -0.01em; }
+.kenyataan { color: var(--dakwat-lembut); margin: 0 0 36px; max-width: 60ch; }
+.ket, .skop-kepala p { color: var(--dakwat-lembut); margin: 0 0 18px; max-width: 62ch; font-size: 0.95rem; }
+section { margin: 0 0 48px; }
+
+/* Senarai sentuhan: elemen utama halaman */
+.jadual-bungkus { position: relative; overflow: hidden; background: var(--kertas); border: 1px solid var(--garis); border-radius: 10px; }
+.sentuhan { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.sentuhan th { text-align: left; font-weight: 600; color: var(--dakwat-lembut); font-size: 0.8rem; padding: 12px 14px 8px; border-bottom: 1px solid var(--garis); }
+.sentuhan td { padding: 11px 14px; border-bottom: 1px solid var(--garis); vertical-align: top; }
+.sentuhan tr:last-child td { border-bottom: 0; }
+.sentuhan .nombor { text-align: right; white-space: nowrap; }
+.nama-koleksi { font-weight: 600; display: block; overflow-wrap: anywhere; }
+.alamat { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.76rem; color: var(--dakwat-lembut); }
+.jenis { display: inline-block; font-size: 0.78rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--garis); white-space: nowrap; }
+.jenis-mint_percuma { border-color: var(--isyarat); color: var(--dakwat); }
+.jenis-airdrop { color: var(--dakwat-lembut); }
+.sapuan {
+  position: absolute; inset: 0 auto 0 0; width: 38%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--isyarat) 16%, transparent) 85%, color-mix(in srgb, var(--isyarat) 55%, transparent) 99%, transparent);
+  transform: translateX(-110%);
+}
+.sedia .sapuan { animation: sapu 1.6s cubic-bezier(.4, .1, .3, 1) 0.2s 1 both; }
+@keyframes sapu { to { transform: translateX(290%); } }
+@media (prefers-reduced-motion: reduce) { .sedia .sapuan { animation: none; } }
+
+/* Keputusan kertas */
+.tetingkap { margin: 0; display: grid; gap: 1px; background: var(--garis); border: 1px solid var(--garis); border-radius: 10px; overflow: hidden; }
+.tetingkap > div { background: var(--kertas); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: baseline; }
+.tetingkap dt { font-weight: 600; }
+.tetingkap dd { margin: 0; }
+.tetingkap .bersih { font-size: 1.25rem; font-weight: 700; text-align: right; white-space: nowrap; }
+.tetingkap .butir { grid-column: 1 / -1; color: var(--dakwat-lembut); font-size: 0.88rem; }
+.positif { color: var(--untung); }
+.negatif { color: var(--rugi); }
+
+.pemenang { margin: 0; padding: 0; list-style: none; }
+.pemenang li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; padding: 10px 0; border-bottom: 1px solid var(--garis); }
+.pemenang .bersih { font-weight: 700; white-space: nowrap; }
+.pemenang .butir { color: var(--dakwat-lembut); font-size: 0.85rem; }
+
+.langkah { margin: 14px 0 0; padding-left: 1.4em; max-width: 64ch; }
+.langkah li { margin: 0 0 10px; padding-left: 4px; }
+.langkah li::marker { color: var(--isyarat); font-weight: 700; }
+.had ul { margin: 10px 0 0; padding-left: 1.2em; max-width: 64ch; }
+.had li { margin: 0 0 8px; }
+
+.kaki { border-top: 1px solid var(--garis); padding: 18px 0 max(28px, env(safe-area-inset-bottom)); color: var(--dakwat-lembut); font-size: 0.88rem; }
+.kaki p { margin: 0 0 6px; }
+
+@media (max-width: 480px) {
+  .sentuhan th:nth-child(2), .sentuhan td:nth-child(2) { display: none; }
+  .sentuhan td, .sentuhan th { padding-left: 12px; padding-right: 12px; }
+}

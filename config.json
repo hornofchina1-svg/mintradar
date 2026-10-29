@@ -1,0 +1,123 @@
+{
+  "_nota": "Every tunable value lives here; the code only reads it. Private RPC URLs go in state/rpc-peribadi.txt ('<url> <role,role>'), never in this file.",
+  "rpc": {
+    "log": [
+      "https://jp-bscscutum.blockrazor.xyz",
+      "https://bsc.blockrazor.xyz"
+    ],
+    "baca": [
+      "https://bsc-dataseed.bnbchain.org",
+      "https://bsc-dataseed1.defibit.io",
+      "https://bsc.blockrazor.xyz"
+    ],
+    "julat_log_maks": 25,
+    "tamat_saat": 20,
+    "ua": "mintradar/0.1 (+kertas, baca sahaja)",
+    "log_alamat": [
+      "https://bsc-rpc.publicnode.com"
+    ],
+    "sela_min": {
+      "nodereal": 0.2,
+      "jp-bscscutum": 0.25,
+      "ger-bscscutum": 0.3,
+      "ire-bscscutum": 0.3,
+      "us-bscscutum": 0.3,
+      "blockrazor": 0.3,
+      "publicnode": 0.15,
+      "bsc-dataseed": 0.1,
+      "quiknode": 0.05
+    },
+    "peribadi_peranan": [
+      "baca"
+    ],
+    "peribadi_dahulu": false,
+    "log_sejarah": [
+      "https://ger-bscscutum.blockrazor.xyz",
+      "https://ire-bscscutum.blockrazor.xyz",
+      "https://us-bscscutum.blockrazor.xyz"
+    ],
+    "putar": [
+      "log_sejarah"
+    ],
+    "_nota_had": "Had blockrazor dikira IKUT IP untuk bsc.blockrazor.xyz (awam + peribadi berkongsi, 429); hos serantau *-bscscutum ada kuota sendiri (diukur 29 Okt). sela_min: kunci padanan PERTAMA menang — yang khusus dahulu.",
+    "log_besar": []
+  },
+  "imbas": {
+    "saat_setiap_larian": 52,
+    "rehat_saat": 3,
+    "tertinggal_maks_blok": 4000,
+    "mula_dari_belakang_blok": 400
+  },
+  "panas": {
+    "_nota": "Kontrak jadi 'panas' bila dalam tetingkap ini cukup mint DAN cukup penerima berbeza. Kemudian sampel tx diperiksa.",
+    "tetingkap_minit": 10,
+    "mint_min": 40,
+    "penerima_min": 20,
+    "sampel_tx": 6,
+    "benang": 6
+  },
+  "kelas": {
+    "nisbah_mint_sendiri_min": 0.6,
+    "harga_mint_maks_bnb": 0.002
+  },
+  "jualan": {
+    "jejak_jam": 48,
+    "sampel_tx_setiap_kontrak": 8,
+    "alamat_setiap_log_maks": 20
+  },
+  "kertas": {
+    "_nota": "Andaian: kita mint 1 pada saat dikesan panas, jual 1 pada harga median jualan dalam tetingkap. Optimistik — jualan sebenar boleh lebih rendah.",
+    "yuran_pasaran": 0.025,
+    "gas_mint": 160000,
+    "tetingkap_jam": [
+      1,
+      6,
+      24
+    ],
+    "bnb_usd_lalai": 750,
+    "usd_myr": 4.4
+  },
+  "laporan": {
+    "teratas": 6,
+    "tahap_notify": "info"
+  },
+  "isi_belakang": {
+    "_nota": "radar.py isi-belakang [--jam N]: jawab untung/rugi dari sejarah rantaian.",
+    "jam_lalai": 36,
+    "benang": 4,
+    "kelompok": 40,
+    "julat_alamat": 40000,
+    "alamat_setiap_log": 20,
+    "tx_setiap_kontrak": 40,
+    "julat_besar": 2000,
+    "benang_besar": 2
+  },
+  "token_bayaran": {
+    "_nota": "ERC-20 yang dikira sebagai bayaran jualan NFT (alamat huruf kecil). usd=true = stabil 1 USD.",
+    "0x55d398326f99059ff775485246999027b3197955": {
+      "simbol": "USDT",
+      "usd": true
+    },
+    "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d": {
+      "simbol": "USDC",
+      "usd": true
+    },
+    "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c": {
+      "simbol": "WBNB",
+      "usd": false
+    }
+  },
+  "abai": {
+    "_nota": "Bukan free mint: NFT kedudukan kecairan DEX (nilai tx = duit kecairan, bukan harga NFT). Ditemui 29 Okt: Uniswap v4 masuk 'terbaik' secara palsu. nama_mengandungi = padanan huruf kecil.",
+    "alamat": [
+      "0x7a4a5c919ae2541aed11041a1aeee68f1287f95b",
+      "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "0x55f4c8abcdfb96f0edcdb9263b9d0f1e59ab4d2a"
+    ],
+    "nama_mengandungi": [
+      "position",
+      "positions nft",
+      "liquidity"
+    ]
+  }
+}
