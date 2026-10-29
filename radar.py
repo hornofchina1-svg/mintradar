@@ -51,7 +51,7 @@ def main(argv):
         isi_belakang.laluan_jualan(c, rpc, con, mula, hujung, isi_belakang._jam_ke_ts(rpc, mula, hujung), lambda m: print(m, flush=True))
         print(laporan.tulis(con, c, int(time.time())))
     elif arahan == "awam":  # stats.json untuk datt.my (data radar sahaja, tiada wallet/enjin)
-        d = awam.tulis(con, c, AKAR / "hidup" / "data")
+        d = awam.tulis(con, c, AKAR / "hidup" / "data", rpc)
         print(f"stats.json: {len(d['terbaru'])} sentuhan, kertas {[x['bersih_bnb'] for x in d['kertas']]}")
     elif arahan == "laporan":
         teks = laporan.tulis(con, c, int(time.time()))

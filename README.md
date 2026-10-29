@@ -21,6 +21,12 @@ but only 14 of 93 made money and most of that came from three collections. After
 5. Paper result per contract: mint at the flag time, sell at the median sale price inside 1, 6 or 24 hours. No buyer in
    the window counts as the full cost lost.
 
+## Safety check
+
+Every contact is checked against its verified source on Sourcify (`radar/semak.py`): which state-changing functions exist
+beyond the standard token ones, who may call them, and whether that control survives a renounce because it is tied to a
+hard-coded address. Unverified source is a red flag on its own. It points at what to read; it is not an audit.
+
 ## Run it
 
 Python 3.10+ and the standard library only.

@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 
-from . import laporan, nilai
+from . import laporan, nilai, semak
 
 
 def bina(con, cfg, sekarang):
@@ -24,8 +24,10 @@ def bina(con, cfg, sekarang):
                WHERE diperiksa=1 AND kelas IN ('mint_percuma','mint_berbayar','airdrop') ORDER BY ts_panas DESC LIMIT 60"""):
         if a in abai.get("alamat", []) or any(x in (nama or "").lower() for x in abai.get("nama_mengandungi", [])):
             continue
+        sm = con.execute("SELECT label, temuan FROM semakan WHERE alamat=?", (a,)).fetchone()
         baru.append({"alamat": a, "nama": nama or simbol or None, "kelas": kelas, "ts_panas": ts_panas,
-                     "ts_pertama": ts_pertama, "mint": jumlah})
+                     "ts_pertama": ts_pertama, "mint": jumlah,
+                     "keselamatan": {"label": sm[0], "temuan": json.loads(sm[1])} if sm else None})
         if len(baru) >= 15:
             break
     siap24 = sorted((x for x in semua if x["pnl"][24] is not None), key=lambda x: -x["pnl"][24][0])
@@ -33,8 +35,16 @@ def bina(con, cfg, sekarang):
                for x in siap24[:5] if x["pnl"][24][0] > 0]
     hari = con.execute("""SELECT COUNT(*), SUM(kelas='mint_percuma'), SUM(kelas='airdrop') FROM kontrak
                           WHERE diperiksa=1 AND ts_panas >= ?""", (sekarang - 86400,)).fetchone()
+    amaran = []
+    for a, label, temuan, nama in con.execute(
+            """SELECT s.alamat, s.label, s.temuan, COALESCE(k.nama, s.nama_kontrak) FROM semakan s LEFT JOIN kontrak k ON k.alamat=s.alamat
+               WHERE s.label='merah' AND s.temuan NOT LIKE '%TIDAK_DISAHKAN%' ORDER BY s.ts DESC LIMIT 8"""):
+        amaran.append({"alamat": a, "nama": nama, "temuan": json.loads(temuan)})
+    disemak = dict(con.execute("SELECT label, COUNT(*) FROM semakan WHERE ts >= ? GROUP BY label", (sekarang - 86400,)).fetchall())
     return {
         "dijana": sekarang,
+        "semakan_24j": {"hijau": disemak.get("hijau", 0), "kuning": disemak.get("kuning", 0), "merah": disemak.get("merah", 0)},
+        "amaran": amaran,
         "rantaian": "BNB Smart Chain",
         "blok": int(con.execute("SELECT nilai FROM keadaan WHERE kunci='blok'").fetchone()[0]),
         "hari": {"panas": hari[0] or 0, "percuma": hari[1] or 0, "airdrop": hari[2] or 0},
@@ -45,9 +55,31 @@ def bina(con, cfg, sekarang):
     }
 
 
-def tulis(con, cfg, folder):
+def semak_baharu(con, cfg, rpc):
+    """Semak kontrak sentuhan terkini yang belum disemak (atau semakan lama). Had setiap larian: config `semak`."""
+    k = cfg["semak"]
+    sekarang = int(time.time())
+    calon = [a for (a,) in con.execute(
+        """SELECT k.alamat FROM kontrak k LEFT JOIN semakan s ON s.alamat=k.alamat
+           WHERE k.diperiksa=1 AND k.kelas IN ('mint_percuma','mint_berbayar') AND k.ts_panas >= ?
+             AND (s.alamat IS NULL OR s.ts < ?) ORDER BY k.ts_panas DESC LIMIT ?""",
+        (sekarang - k["umur_kontrak_jam"] * 3600, sekarang - k["semak_semula_jam"] * 3600, k["setiap_larian"]))]
+    for a in calon:
+        try:
+            h = semak.semak(rpc, a)
+        except Exception:  # noqa: BLE001 — Sourcify/RPC sibuk: cuba larian seterusnya
+            continue
+        con.execute("INSERT OR REPLACE INTO semakan VALUES (?,?,?,?,?,?)",
+                    (a, sekarang, h["label"], json.dumps(h["temuan"]), json.dumps(h["admin"]), h.get("nama_kontrak")))
+    con.commit()
+    return len(calon)
+
+
+def tulis(con, cfg, folder, rpc=None):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
+    if rpc is not None:
+        semak_baharu(con, cfg, rpc)
     data = bina(con, cfg, int(time.time()))
     sementara = folder / ".stats.json.tmp"
     sementara.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
@@ -67,9 +99,19 @@ def render_html(data, templat, bahasa):
     e = html.escape
     t = bahasa["en"]
     sekarang = data["dijana"]
+    def teks_temuan(x):
+        return t["temuan_" + x["kod"]].replace("{fungsi}", (x["fungsi"] + "()") if x["fungsi"] else "")
+
+    def sel(k):
+        label = k["label"] if k else "belum"
+        out = f'<td class="selamat"><span class="lencana lencana-{e(label)}">{e(t["label_" + label])}</span>'
+        if k and k["temuan"]:
+            unik = list({x["kod"]: x for x in k["temuan"]}.values())[:2]
+            out += f'<span class="temuan">{e(" ".join(teks_temuan(x) for x in unik))}</span>'
+        return out + "</td>"
     baris = "".join(
         f'<tr><td><span class="nama-koleksi">{e(x["nama"] or t["tanpa_nama"])}</span><span class="alamat">{e(x["alamat"][:6])}\u2026{e(x["alamat"][-4:])}</span></td>'
-        f'<td><span class="jenis jenis-{e(x["kelas"])}">{e(t["jenis_" + x["kelas"]])}</span></td>'
+        f'<td><span class="jenis jenis-{e(x["kelas"])}">{e(t["jenis_" + x["kelas"]])}</span></td>{sel(x.get("keselamatan"))}'
         f'<td class="nombor">{x["mint"]:,}</td><td class="nombor">{_lalu(x["ts_panas"], sekarang)}</td></tr>'
         for x in data["terbaru"])
     def bnb(v):
@@ -86,6 +128,16 @@ def render_html(data, templat, bahasa):
     out = templat.replace('<tbody id="senarai-sentuhan"></tbody>', f'<tbody id="senarai-sentuhan">{baris}</tbody>')
     out = out.replace('<dl id="senarai-kertas" class="tetingkap"></dl>', f'<dl id="senarai-kertas" class="tetingkap">{kertas}</dl>')
     out = out.replace('<ol id="senarai-teratas" class="pemenang"></ol>', f'<ol id="senarai-teratas" class="pemenang">{teratas}</ol>')
+    amaran = "".join(
+        f'<li><span class="nama-koleksi">{e(a["nama"] or a["alamat"])}</span><span class="alamat">{e(a["alamat"])}</span>'
+        + "".join(f'<span class="temuan">{e(teks_temuan(x))}</span>' for x in a["temuan"] if x["kod"] in ("KEKAL_DANA", "PROKSI"))
+        + "</li>" for a in data.get("amaran", [])) or f'<li class="kosong">{e(t["amaran_kosong"])}</li>'
+    out = out.replace('<ul id="senarai-amaran" class="senarai-amaran"></ul>', f'<ul id="senarai-amaran" class="senarai-amaran">{amaran}</ul>')
+    if data.get("semakan_24j"):
+        sb = t["semakan_baris"]
+        for k, v in data["semakan_24j"].items():
+            sb = sb.replace("{" + k + "}", str(v))
+        out = out.replace('<p id="semakan-baris" class="ket"></p>', f'<p id="semakan-baris" class="ket">{e(sb)}</p>')
     kaki = t["kaki_dijana"].replace("{masa}", masa).replace("{blok}", f"{data['blok']:,}")
     out = out.replace('<p id="kaki-data" aria-live="polite"></p>', f'<p id="kaki-data" aria-live="polite">{e(kaki)}</p>')
     return out

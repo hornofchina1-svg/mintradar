@@ -119,5 +119,11 @@
       "positions nft",
       "liquidity"
     ]
+  },
+  "semak": {
+    "_nota": "Automatic safety check against verified source on Sourcify. Heuristic, not an audit.",
+    "setiap_larian": 8,
+    "umur_kontrak_jam": 48,
+    "semak_semula_jam": 24
   }
 }

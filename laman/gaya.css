@@ -99,6 +99,28 @@ section { margin: 0 0 48px; }
 .kaki p { margin: 0 0 6px; }
 
 @media (max-width: 480px) {
-  .sentuhan th:nth-child(2), .sentuhan td:nth-child(2) { display: none; }
+  /* Jenis + Mint disorok: lajur Keselamatan menjadikan jadual lebih lebar daripada pembungkus (overflow:hidden menyorok
+     tajuk "Dikesan" dan memecah nama; ujian limpahan-x tidak nampak kerana pembungkus memotongnya — diukur 29 Okt) */
+  .sentuhan th:nth-child(2), .sentuhan td:nth-child(2), .sentuhan th:nth-child(4), .sentuhan td:nth-child(4) { display: none; }
   .sentuhan td, .sentuhan th { padding-left: 12px; padding-right: 12px; }
+}
+
+/* Keselamatan: lencana kecil, warna sebagai isyarat sahaja (teks label sentiasa ada) */
+.selamat { min-width: 8.5rem; }
+.lencana { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.lencana::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--garis); flex: none; }
+.lencana-hijau::before { background: var(--untung); }
+.lencana-kuning::before { background: var(--isyarat); }
+.lencana-merah::before { background: var(--rugi); }
+.lencana-merah { color: var(--rugi); }
+.temuan { display: block; font-size: 0.78rem; color: var(--dakwat-lembut); margin-top: 3px; line-height: 1.35; }
+.senarai-amaran { margin: 0; padding: 0; list-style: none; }
+.senarai-amaran li { padding: 12px 14px; border: 1px solid var(--rugi); border-left-width: 4px; border-radius: 8px; margin-bottom: 10px; background: var(--kertas); }
+.senarai-amaran li.kosong { border-color: var(--garis); color: var(--dakwat-lembut); }
+.senarai-amaran .alamat { display: block; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .selamat { min-width: 0; }
+  .nama-koleksi { overflow-wrap: anywhere; hyphens: auto; -webkit-hyphens: auto; }
+  .sentuhan td.nombor { white-space: normal; font-size: 0.8rem; color: var(--dakwat-lembut); }
+  .sentuhan .temuan { display: none; }
 }

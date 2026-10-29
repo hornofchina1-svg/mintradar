@@ -51,6 +51,7 @@
       var tj = el("td");
       tj.appendChild(el("span", "jenis jenis-" + s.kelas, t("jenis_" + s.kelas)));
       tr.appendChild(tj);
+      tr.appendChild(selTd(s.keselamatan));
       tr.appendChild(el("td", "nombor", s.mint.toLocaleString(bahasa)));
       tr.appendChild(el("td", "nombor", lalu(s.ts_panas)));
       tb.appendChild(tr);
@@ -77,8 +78,37 @@
       ol.appendChild(li);
     });
 
+    var ul = document.getElementById("senarai-amaran");
+    ul.textContent = "";
+    if (!data.amaran || !data.amaran.length) ul.appendChild(el("li", "kosong", t("amaran_kosong")));
+    (data.amaran || []).forEach(function (a) {
+      var li = el("li");
+      li.appendChild(el("span", "nama-koleksi", a.nama || pendek(a.alamat)));
+      li.appendChild(el("span", "alamat", a.alamat));
+      a.temuan.filter(function (x) { return x.kod === "KEKAL_DANA" || x.kod === "PROKSI"; })
+        .forEach(function (x) { li.appendChild(el("span", "temuan", teksTemuan(x))); });
+      ul.appendChild(li);
+    });
+    if (data.semakan_24j) document.getElementById("semakan-baris").textContent = t("semakan_baris", data.semakan_24j);
+
     var masa = new Date(data.dijana * 1000).toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
     kaki.textContent = t("kaki_dijana", { masa: masa, blok: data.blok.toLocaleString(bahasa) });
+  }
+
+  function teksTemuan(x) {
+    return t("temuan_" + x.kod, { fungsi: x.fungsi ? x.fungsi + "()" : "" });
+  }
+  function selTd(k) {
+    var td = el("td", "selamat");
+    var label = k ? k.label : "belum";
+    var lencana = el("span", "lencana lencana-" + label, t("label_" + label));
+    td.appendChild(lencana);
+    if (k && k.temuan.length) {
+      var unik = [], dilihat = {};
+      k.temuan.forEach(function (x) { if (!dilihat[x.kod]) { dilihat[x.kod] = 1; unik.push(x); } });
+      td.appendChild(el("span", "temuan", unik.slice(0, 2).map(teksTemuan).join(" ")));
+    }
+    return td;
   }
 
   function ambil(url) {
