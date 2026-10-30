@@ -45,6 +45,16 @@ class TestScouts(unittest.TestCase):
         self.assertEqual([x["agent"] for x in b["leaderboard"]], ["ejenA"])
         self.assertEqual((b["reports"], b["confirmed"]), (1, 1))
 
+    def test_halangan(self):
+        from radar import scouts
+        t = 1793400000
+        lama = {"created_at": "2026-10-01T00:00:00.000Z", "wallet": "0xABC0000000000000000000000000000000000001"}
+        self.assertEqual(scouts.halangan(dict(lama, created_at="2026-10-30T10:00:00.000Z"), None, CFG, 1793354400 + 3600), "BAHARU")
+        self.assertEqual(scouts.halangan(lama, "0xabc0000000000000000000000000000000000001", CFG, t), "SENDIRI")
+        self.assertIsNone(scouts.halangan(lama, "0x" + "9" * 40, CFG, t))
+        self.assertIsNone(scouts.halangan(lama, None, CFG, t))
+        self.assertEqual(scouts.halangan({}, None, CFG, t), "BAHARU")  # tiada tarikh = jangan percaya
+
 
 if __name__ == "__main__":
     unittest.main()

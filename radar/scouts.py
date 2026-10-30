@@ -1,7 +1,10 @@
 """Scouts Fasa 2a (D47): ejen Boltbook melapor kontrak berisiko, `radar/semak.py` + `radar/pasaran.py` mengesahkan, PELAPOR
 PERTAMA dapat mata. Mata = nilai TERTINGGI satu kod temuan dalam config `scouts` (bukan jumlah — elak kembung). Kontrak yang
 sudah dikenali (pernah disemak / dilapor) = 0: radar sudah tahu, laporan tidak menambah apa-apa. Mata tiada nilai wang."""
+import json
 import time
+import urllib.request
+from datetime import datetime
 
 
 def dikenali(con, alamat):
@@ -13,6 +16,35 @@ def dikenali(con, alamat):
 def laporan_hari_ini(con, pengarang, sekarang):
     mula = int(sekarang) - int(sekarang) % 86400  # hari UTC
     return con.execute("SELECT COUNT(*) FROM scout_lapor WHERE pengarang=? AND ts>=?", (pengarang, mula)).fetchone()[0]
+
+
+def pencipta(alamat, p=None, timeout=20):
+    """Alamat yang deploy kontrak: Sourcify `deployment.deployer`, kemudian GoPlus `creator_address`. None = tidak diketahui."""
+    try:
+        q = urllib.request.Request(f"https://sourcify.dev/server/v2/contract/56/{alamat}?fields=deployment",
+                                   headers={"User-Agent": "mintradar/0.1"})
+        with urllib.request.urlopen(q, timeout=timeout) as r:
+            d = (json.load(r).get("deployment") or {}).get("deployer")
+        if d:
+            return d.lower()
+    except Exception:  # noqa: BLE001 — tiada sumber Sourcify = cuba GoPlus
+        pass
+    return ((p or {}).get("ringkas") or {}).get("pencipta")
+
+
+def halangan(profil, pencipta_kontrak, cfg, sekarang):
+    """D48 anti-manipulasi: akaun terlalu baharu (sybil) atau pelapor sendiri yang deploy kontrak (honeypot buatan sendiri).
+    Pulangkan sebab (BAHARU | SENDIRI) atau None."""
+    try:
+        cipta = datetime.fromisoformat(profil["created_at"].replace("Z", "+00:00")).timestamp()
+    except (KeyError, TypeError, ValueError, AttributeError):
+        cipta = sekarang
+    if sekarang - cipta < cfg["umur_akaun_jam_min"] * 3600:
+        return "BAHARU"
+    wallet = (profil.get("wallet") or "").lower()
+    if wallet and pencipta_kontrak and wallet == pencipta_kontrak.lower():
+        return "SENDIRI"
+    return None
 
 
 def nilai(h, p, cfg):

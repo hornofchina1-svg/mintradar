@@ -337,6 +337,19 @@
       ol.appendChild(li);
     });
     document.getElementById("scouts-baris").textContent = t("scouts_baris", { laporan: sc.reports, disahkan: sc.confirmed });
+    document.getElementById("scouts-aturan").textContent = t("scouts_aturan", { jam: sc.min_account_hours });
+    var ul = document.getElementById("scouts-terkini");
+    ul.textContent = "";
+    if (!sc.recent.length) ul.appendChild(el("li", "kosong", t("scouts_terkini_kosong")));
+    sc.recent.forEach(function (x) {
+      var li = el("li");
+      var dasar = t("temuan_" + x.code) || t("pasaran_" + x.code) || x.code;
+      li.appendChild(el("span", null, x.agent + " \u00b7 " + dasar.split("{fungsi}").join(t("scouts_fungsi")).replace(/:?\s*\{nilai\}/g, "") + " \u00b7 +" + x.points));
+      var a = el("a", "alamat", pendek(x.contract));
+      a.href = "/data/kontrak/" + x.contract + ".json";
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
   }
 
   function muatData() {

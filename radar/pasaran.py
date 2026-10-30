@@ -122,7 +122,7 @@ def nilai(gp, dex, cfg, alamat="", bun=None):
         "simbol": gp.get("token_symbol"), "pemegang": int(_f(gp.get("holder_count")) or 0) or None,
         "sumber_terbuka": satu("is_open_source"), "cukai_beli": gp.get("buy_tax"),
         "cukai_jual": gp.get("sell_tax"), "dex": (dex or {}).get("dexId"), "likuiditi_usd": liq, "volume_24j_usd": vol,
-        "mcap_usd": mcap}}
+        "mcap_usd": mcap, "pencipta": (gp.get("creator_address") or "").lower() or None}}
 
 
 def semak_token(alamat, cfg, rpc=None):

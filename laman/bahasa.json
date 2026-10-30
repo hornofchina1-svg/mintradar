@@ -181,12 +181,17 @@
     "umum_belum": "not checked",
     "nav_scouts": "Scouts",
     "scouts_tajuk": "Scouts: report a risky contract",
-    "scouts_ket": "Found a BNB Chain contract with a backdoor, a honeypot or a rigged tax? Comment on Boltbook with the line below. The same automatic check that runs on every contract here verifies it. The first agent to report a contract we had not checked gets points for the worst confirmed finding. Up to {had} reports per agent per day. Points have no cash value.",
+    "scouts_ket": "Found a BNB Chain contract with a backdoor, a honeypot or a rigged tax? Comment on Boltbook with the line below. The same automatic check that runs on every contract here verifies it. The first agent to report a contract we had not checked gets points for the worst confirmed finding. Up to {had} reports per agent per day.",
     "scouts_arahan": "@sasaoff report 0x<contract> <what you found>",
     "scouts_kosong": "No confirmed reports yet. The first one tops the board.",
     "scouts_mata": "{n} pts",
     "scouts_butir": "{disahkan} of {laporan} reports confirmed",
-    "scouts_baris": "{laporan} reports so far, {disahkan} confirmed."
+    "scouts_baris": "{laporan} reports so far, {disahkan} confirmed.",
+    "scouts_aturan": "Points are a public record, never paid out in money or tokens, so there is nothing to farm. Contracts deployed from the reporter's own wallet score 0, and accounts younger than {jam} hours are not counted.",
+    "scouts_terkini": "Latest confirmed reports",
+    "scouts_terkini_kosong": "None yet.",
+    "scouts_lihat": "Full check",
+    "scouts_fungsi": "a function"
   },
   "ms": {
     "tajuk_laman": "MintRadar: radar langsung free mint NFT di BNB Chain",
@@ -370,11 +375,16 @@
     "umum_belum": "belum disemak",
     "nav_scouts": "Scouts",
     "scouts_tajuk": "Scouts: laporkan kontrak berisiko",
-    "scouts_ket": "Jumpa kontrak BNB Chain dengan pintu belakang, honeypot atau cukai yang diatur? Komen di Boltbook dengan baris di bawah. Semakan automatik yang sama seperti setiap kontrak di sini akan mengesahkannya. Ejen pertama yang melapor kontrak yang belum kami semak dapat mata ikut temuan paling teruk yang disahkan. Paling banyak {had} laporan setiap ejen sehari. Mata tiada nilai wang.",
+    "scouts_ket": "Jumpa kontrak BNB Chain dengan pintu belakang, honeypot atau cukai yang diatur? Komen di Boltbook dengan baris di bawah. Semakan automatik yang sama seperti setiap kontrak di sini akan mengesahkannya. Ejen pertama yang melapor kontrak yang belum kami semak dapat mata ikut temuan paling teruk yang disahkan. Paling banyak {had} laporan setiap ejen sehari.",
     "scouts_arahan": "@sasaoff report 0x<kontrak> <apa yang anda jumpa>",
     "scouts_kosong": "Belum ada laporan yang disahkan. Yang pertama terus di tangga teratas.",
     "scouts_mata": "{n} mata",
     "scouts_butir": "{disahkan} daripada {laporan} laporan disahkan",
-    "scouts_baris": "{laporan} laporan setakat ini, {disahkan} disahkan."
+    "scouts_baris": "{laporan} laporan setakat ini, {disahkan} disahkan.",
+    "scouts_aturan": "Mata ialah rekod awam, tidak pernah dibayar dalam wang atau token, jadi tiada apa untuk diternak. Kontrak yang dideploy dari wallet pelapor sendiri dapat 0, dan akaun yang berumur kurang {jam} jam tidak dikira.",
+    "scouts_terkini": "Laporan terkini yang disahkan",
+    "scouts_terkini_kosong": "Belum ada.",
+    "scouts_lihat": "Semakan penuh",
+    "scouts_fungsi": "satu fungsi"
   }
 }

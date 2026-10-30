@@ -121,7 +121,8 @@ def tulis(con, cfg, folder, rpc=None):
         data["dompet"] = token.dompet(rpc, cfg)
     from . import scouts  # D47: papan pendahulu Scouts (API EN untuk ejen + seksyen #scouts)
     sc = cfg.get("scouts") or {}
-    data["scouts"] = dict(scouts.papan(con, sc.get("papan_had", 20)), daily_limit=sc.get("had_sehari"), live=bool(sc.get("hidup")))
+    data["scouts"] = dict(scouts.papan(con, sc.get("papan_had", 20)), daily_limit=sc.get("had_sehari"),
+                           min_account_hours=sc.get("umur_akaun_jam_min"), paid_rewards=False, live=bool(sc.get("hidup")))
     sementara = folder / ".stats.json.tmp"
     sementara.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     os.replace(sementara, folder / "stats.json")  # nginx tidak pernah nampak fail separuh
@@ -132,7 +133,7 @@ def tulis(con, cfg, folder, rpc=None):
 
 # API datt.my dalam EN (ejen Boltbook); DB kekal BM
 EN_RINGKAS = {"simbol": "symbol", "pemegang": "holders", "sumber_terbuka": "source_verified_bscscan", "cukai_beli": "buy_tax",
-              "cukai_jual": "sell_tax", "likuiditi_usd": "liquidity_usd", "volume_24j_usd": "volume_24h_usd"}
+              "cukai_jual": "sell_tax", "likuiditi_usd": "liquidity_usd", "volume_24j_usd": "volume_24h_usd", "pencipta": "creator"}
 EN_BUNDLE = {"dompet": "same_block_wallets", "blok_bundle": "same_block_blocks", "wallet_satu_blok_maks": "max_wallets_one_block",
              "pct_dibeli": "pct_supply_bought", "pembeli_awal": "early_buyers", "kaitan": "links", "terpaut": "linked_wallets",
              "baharu": "near_new_wallets", "disemak": "wallets_checked", "pct_masih": "pct_supply_still_held", "blok_cetakan": "launch_block"}
@@ -227,6 +228,10 @@ def render_html(data, templat, bahasa, lang="en"):
     e = html.escape
     t = bahasa[lang]
     sekarang = data["dijana"]
+    def teks_kod(kod):  # D48: teks temuan tanpa pemegang tempat (laporan Scouts menyimpan kod sahaja)
+        teks = (t.get("temuan_" + kod) or t.get("pasaran_" + kod) or kod).replace("{fungsi}", t["scouts_fungsi"])
+        return re.sub(r":?\s*\{nilai\}", "", teks).strip()
+
     def teks_temuan(x):
         return t["temuan_" + x["kod"]].replace("{fungsi}", (x["fungsi"] + "()") if x["fungsi"] else "")
 
@@ -282,6 +287,13 @@ def render_html(data, templat, bahasa, lang="en"):
             f'<span class="butir">{e(t["scouts_butir"].replace("{disahkan}", str(x["confirmed"])).replace("{laporan}", str(x["reports"])))}</span></li>'
             for x in sc["leaderboard"]) or f'<li class="kosong">{e(t["scouts_kosong"])}</li>'
         out = out.replace('<ol id="senarai-scouts" class="pemenang"></ol>', f'<ol id="senarai-scouts" class="pemenang">{papan}</ol>')
+        out = out.replace('<p id="scouts-aturan" class="ket"></p>',
+                          f'<p id="scouts-aturan" class="ket">{e(t["scouts_aturan"].replace("{jam}", str(sc.get("min_account_hours"))))}</p>')
+        terkini = "".join(
+            f'<li><span>{e(x["agent"])} \u00b7 {e(teks_kod(x["code"]))} \u00b7 +{x["points"]}</span>'
+            f'<a class="alamat" href="/data/kontrak/{e(x["contract"])}.json">{e(x["contract"][:6])}\u2026{e(x["contract"][-4:])}</a></li>'
+            for x in sc["recent"]) or f'<li class="kosong">{e(t["scouts_terkini_kosong"])}</li>'
+        out = out.replace('<ul id="scouts-terkini" class="belanja"></ul>', f'<ul id="scouts-terkini" class="belanja">{terkini}</ul>')
         out = out.replace('<p id="scouts-baris" class="ket"></p>', f'<p id="scouts-baris" class="ket">{e(t["scouts_baris"].replace("{laporan}", str(sc["reports"])).replace("{disahkan}", str(sc["confirmed"])))}</p>')
     kaki = t["kaki_dijana"].replace("{masa}", masa).replace("{blok}", f"{data['blok']:,}")
     out = out.replace('<p id="kaki-data" aria-live="polite"></p>', f'<p id="kaki-data" aria-live="polite">{e(kaki)}</p>')

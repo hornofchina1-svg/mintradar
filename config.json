@@ -182,6 +182,8 @@
       "CUKAI_BOLEH_UBAH": 2,
       "PEMEGANG_BESAR": 1
     },
-    "papan_had": 20
+    "papan_had": 20,
+    "umur_akaun_jam_min": 24,
+    "_nota_hadiah": "Pemilik 30 Okt: TIADA ganjaran berbayar (wang/token) atas mata — elak manipulasi. Mata = rekod reputasi sahaja."
   }
 }
