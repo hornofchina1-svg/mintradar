@@ -55,13 +55,9 @@ def tulis(con, cfg, sekarang):
             p, m, bil = x["pnl"][24]
             baris.append(f"  {x['nama']}: {p:+.4f} BNB (RM{rm(p):+.2f}), {bil} jualan, dikesan {x['lewat_minit']} min selepas mint pertama")
     try:
-        m = con.execute("SELECT COUNT(*), COALESCE(SUM(gas),0) FROM mint_sebenar WHERE status='dihantar'").fetchone()
-        st = dict(con.execute("SELECT status, COUNT(*) FROM pegangan GROUP BY status").fetchall())
-        hasil_jual = con.execute("SELECT COALESCE(SUM(harga_bnb),0) FROM pegangan WHERE status='terjual'").fetchone()[0]
-        kos = m[1] * 0.05e9 / 1e18  # anggaran gas pada 0.05 gwei
-        bersih = hasil_jual * (1 - cfg["jual"]["yuran_platform_mata"] / 10000) - kos
-        baris.append(f"💰 SEBENAR: {m[0]} mint (gas ≈ {kos:.5f} BNB), disenarai {st.get('disenarai', 0)}, terjual {st.get('terjual', 0)}, "
-                     f"dipegang {st.get('dipegang', 0) + st.get('tidak_diindeks', 0)}. Bersih ≈ {bersih:+.5f} BNB (RM{rm(bersih):+.2f}).")
+        sb = sebenar(con, cfg)["semua"]
+        baris.append(f"💰 SEBENAR: {sb['mint']} mint (gas ≈ {sb['gas_bnb']:.5f} BNB), disenarai {sb['disenarai']}, terjual {sb['terjual']}, "
+                     f"dipegang {sb['dipegang']}. Bersih ≈ {sb['bersih_bnb']:+.5f} BNB (RM{rm(sb['bersih_bnb']):+.2f}).")
     except Exception:  # noqa: BLE001 — jadual Fasa 2 belum wujud pada DB lama
         pass
     jumlah_panas = con.execute("SELECT COUNT(*), SUM(kelas='airdrop'), SUM(kelas='mint_mahal') FROM kontrak WHERE diperiksa=1 AND ts_panas >= ?",
@@ -69,3 +65,23 @@ def tulis(con, cfg, sekarang):
     baris.append(f"Kontrak panas 24 j: {jumlah_panas[0] or 0} (airdrop/spam {jumlah_panas[1] or 0}, mahal {jumlah_panas[2] or 0}). "
                  f"BNB ${usd:.0f}. Andaian: mint 1 bila dikesan, jual pada median harga jualan; tiada pembeli = rugi kos.")
     return "\n".join(baris)
+
+
+def sebenar(con, cfg):
+    """Rekod SEBENAR (bukan kertas) bot mint: semua + sebelum/selepas peraturan D30 (`mint.jualan_min_sejak`). Satu sumber untuk
+    laporan Telegram dan datt.my. Gas dianggar pada 0.05 gwei (BSC); hasil jual ditolak yuran platform."""
+    yuran = 1 - cfg["jual"]["yuran_platform_mata"] / 10000
+    sejak = cfg["mint"].get("jualan_min_sejak", 0)
+
+    def bahagian(syarat, arg):
+        m = con.execute(f"SELECT COUNT(*), COALESCE(SUM(gas),0) FROM mint_sebenar WHERE status='dihantar' AND {syarat}", arg).fetchone()
+        st = dict(con.execute(f"""SELECT p.status, COUNT(*) FROM pegangan p WHERE p.ts_mint IS NOT NULL AND {syarat.replace('ts', 'p.ts_mint')}
+                                  GROUP BY p.status""", arg).fetchall())
+        hasil = con.execute(f"SELECT COALESCE(SUM(harga_bnb),0) FROM pegangan WHERE status='terjual' AND {syarat.replace('ts', 'ts_mint')}",
+                            arg).fetchone()[0]
+        kos = m[1] * 0.05e9 / 1e18
+        return {"mint": m[0], "gas_bnb": round(kos, 6), "disenarai": st.get("disenarai", 0), "terjual": st.get("terjual", 0),
+                "dipegang": st.get("dipegang", 0) + st.get("tidak_diindeks", 0), "hasil_bnb": round(hasil * yuran, 6),
+                "bersih_bnb": round(hasil * yuran - kos, 6)}
+    return {"semua": bahagian("ts >= ?", (0,)), "sebelum": bahagian("ts < ?", (sejak,)), "selepas": bahagian("ts >= ?", (sejak,)),
+            "sejak": sejak, "mula": con.execute("SELECT MIN(ts) FROM mint_sebenar WHERE status='dihantar'").fetchone()[0]}

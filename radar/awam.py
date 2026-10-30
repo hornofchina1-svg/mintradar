@@ -46,6 +46,23 @@ def bina(con, cfg, sekarang):
                WHERE s.label='merah' AND s.temuan NOT LIKE '%TIDAK_DISAHKAN%' ORDER BY s.ts DESC LIMIT 8"""):
         amaran.append({"alamat": a, "nama": nama, "temuan": json.loads(temuan)})
     disemak = dict(con.execute("SELECT label, COUNT(*) FROM semakan WHERE ts >= ? GROUP BY label", (sekarang - 86400,)).fetchall())
+    # Peta haba (D39): kontrak paling banyak dimint 60 min lepas × mint setiap minit — ladang ejen yang mint serentak kelihatan
+    mula = sekarang // 60 * 60 - 3600
+    peta = []
+    for a, nama, jum in con.execute(
+            """SELECT m.alamat, COALESCE(k.nama, k.simbol), SUM(m.mint) s FROM minit m JOIN kontrak k ON k.alamat=m.alamat
+               WHERE m.minit_ts >= ? AND k.kelas IN ('mint_percuma','mint_berbayar') GROUP BY m.alamat ORDER BY s DESC LIMIT ?""",
+            (mula, cfg.get("laman", {}).get("peta_baris", 8))):
+        if a in abai.get("alamat", []):
+            continue
+        baris = [0] * 60
+        for ts, m in con.execute("SELECT minit_ts, mint FROM minit WHERE alamat=? AND minit_ts >= ?", (a, mula)):
+            i = (ts - mula) // 60
+            if 0 <= i < 60:
+                baris[i] += m
+        sm = con.execute("SELECT label FROM semakan WHERE alamat=?", (a,)).fetchone()
+        peta.append({"alamat": a, "nama": nama, "jumlah": jum, "minit": baris, "label": sm[0] if sm else None,
+                     "jualan": con.execute("SELECT COUNT(*) FROM jualan WHERE alamat=? AND harga_bnb > 0", (a,)).fetchone()[0]})
     return {
         "dijana": sekarang,
         "semakan_24j": {"hijau": disemak.get("hijau", 0), "kuning": disemak.get("kuning", 0), "merah": disemak.get("merah", 0)},
@@ -57,6 +74,7 @@ def bina(con, cfg, sekarang):
         "teratas_24j": teratas,
         "tumpuan_24j": tumpuan,
         "terbaru": baru,
+        "peta": {"mula": mula, "kontrak": peta},
         "andaian": {"yuran": k["yuran_pasaran"], "gas_mint": k["gas_mint"]},
     }
 
@@ -87,12 +105,33 @@ def tulis(con, cfg, folder, rpc=None):
     if rpc is not None:
         semak_baharu(con, cfg, rpc)
     data = bina(con, cfg, int(time.time()))
+    # D41: lejar perbelanjaan cukai = config `belanja` [{tarikh, perkara, bnb, tx}] — tambah satu baris setiap kali cukai dibelanja
+    data["belanja"] = [x for x in cfg.get("belanja", []) if isinstance(x, dict) and not str(x.get("perkara", "")).startswith("_")]
+    try:  # D41: rekod sebenar (bukan kertas), sebelum/selepas D30
+        data["sebenar"] = laporan.sebenar(con, cfg)
+    except Exception:  # noqa: BLE001
+        data["sebenar"] = None
+    if rpc is not None:  # D37: seksyen token $MRADAR (None = tersorok); D41: wallet ejen
+        from . import token
+        try:
+            data["token"] = token.bina(rpc, cfg)
+        except Exception:  # noqa: BLE001
+            data["token"] = None
+        data["dompet"] = token.dompet(rpc, cfg)
     sementara = folder / ".stats.json.tmp"
     sementara.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     os.replace(sementara, folder / "stats.json")  # nginx tidak pernah nampak fail separuh
     tulis_kontrak(con, folder / "kontrak", data["dijana"])
     render_laman(data, folder.parent / "laman")
     return data
+
+
+# API datt.my dalam EN (ejen Boltbook); DB kekal BM
+EN_RINGKAS = {"simbol": "symbol", "pemegang": "holders", "sumber_terbuka": "source_verified_bscscan", "cukai_beli": "buy_tax",
+              "cukai_jual": "sell_tax", "likuiditi_usd": "liquidity_usd", "volume_24j_usd": "volume_24h_usd"}
+EN_BUNDLE = {"dompet": "same_block_wallets", "blok_bundle": "same_block_blocks", "wallet_satu_blok_maks": "max_wallets_one_block",
+             "pct_dibeli": "pct_supply_bought", "pembeli_awal": "early_buyers", "kaitan": "links", "terpaut": "linked_wallets",
+             "baharu": "near_new_wallets", "disemak": "wallets_checked", "pct_masih": "pct_supply_still_held", "blok_cetakan": "launch_block"}
 
 
 def tulis_kontrak(con, folder, sekarang):
@@ -114,10 +153,28 @@ def tulis_kontrak(con, folder, sekarang):
             "source": f"https://sourcify.dev/server/v2/contract/56/{a}?fields=sources,abi",
             "note": "Automatic heuristic from verified source, not an audit. Red = unverified, upgradeable proxy, or a hard-coded address that can move funds.",
         }
+        ps = con.execute("SELECT ts, label, temuan, ringkas, bundle FROM pasaran WHERE alamat=?", (a,)).fetchone()
+        if ps:  # D34: semakan pasaran token BEP-20 (hanya bila pernah diminta melalui @sasaoff / radar.py semak)
+            rk, bn = json.loads(ps[3]), json.loads(ps[4] or "null")
+            rekod["name"] = rekod["name"] or rk.get("simbol")
+            rekod["market"] = {
+                "checked_at": ps[0], "label": ps[1], "summary": {EN_RINGKAS.get(k, k): v for k, v in rk.items()},
+                "bundle": bn and {EN_BUNDLE.get(k, k): ({EN_BUNDLE.get(k2, k2): v2 for k2, v2 in v.items()} if isinstance(v, dict) else v)
+                                  for k, v in bn.items()},
+                "findings": [{"code": x["kod"], "value": x["nilai"], "text": t.get("pasaran_" + x["kod"], x["kod"]).replace("{nilai}", str(x["nilai"]))}
+                             for x in json.loads(ps[2])],
+                "note": "GoPlus token_security + DexScreener + on-chain early buyers. Heuristic, not an audit and not a buy signal.",
+            }
+            if rk.get("sumber_terbuka") and any(x["code"] == "TIDAK_DISAHKAN" for x in rekod["findings"]):
+                # sama seperti balasan @sasaoff: disahkan BscScan ≠ tiada sumber (D31)
+                label = "kuning"
+                rekod["findings"] = [dict(x, code="SUMBER_BSCSCAN", text=t.get("temuan_SUMBER_BSCSCAN", x["text"]))
+                                     if x["code"] == "TIDAK_DISAHKAN" else x for x in rekod["findings"]]
+            rekod["label"] = max(label, ps[1], key=["hijau", "kuning", "merah"].index)
         sementara = folder / f".{a}.tmp"
         sementara.write_text(json.dumps(rekod, ensure_ascii=False, separators=(",", ":")))
         os.replace(sementara, folder / f"{a}.json")
-        indeks.append({"address": a, "name": rekod["name"], "label": label, "checked_at": ts})
+        indeks.append({"address": a, "name": rekod["name"], "label": rekod["label"], "checked_at": ts})
     indeks.sort(key=lambda x: -x["checked_at"])
     sementara = folder / ".index.tmp"
     sementara.write_text(json.dumps({"generated_at": sekarang, "count": len(indeks), "contracts": indeks}, separators=(",", ":")))

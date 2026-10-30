@@ -125,5 +125,36 @@
     "setiap_larian": 8,
     "umur_kontrak_jam": 48,
     "semak_semula_jam": 24
+  },
+  "pasaran": {
+    "_nota": "Scouts 1c (D31): semakan pasaran token BEP-20 (GoPlus + DexScreener). Ambang senarai semak 'degen': pemegang > 3.8%, volume 24 j > N x mcap = bot.",
+    "pemegang_maks_pct": 3.8,
+    "top10_maks_pct": 30,
+    "pencipta_maks_pct": 5,
+    "cukai_kuning": 0.05,
+    "cukai_merah": 0.1,
+    "likuiditi_min_usd": 5000,
+    "volume_mcap_maks": 5,
+    "bundle": {
+      "_nota": "D32: blok dengan >= pembeli_sama_blok wallet berbeza dalam tetingkap_blok pertama selepas cetakan = bundle. pct_masih >= merah_pct = merah.",
+      "tetingkap_blok": 120,
+      "pembeli_sama_blok": 3,
+      "semak_baki_maks": 40,
+      "kuning_pct": 5,
+      "merah_pct": 15,
+      "semak_tx_maks": 40,
+      "nonce_baharu": 3
+    }
+  },
+  "laman": {
+    "_nota": "D39: rupa A (Skop) + peta haba di datt.my.",
+    "peta_baris": 8
+  },
+  "belanja": [],
+  "_nota_belanja": "D41: setiap perbelanjaan daripada cukai $MRADAR = {\"tarikh\": \"YYYY-MM-DD\", \"perkara\": \"…\", \"bnb\": 0.0, \"tx\": \"0x…\"}; dipapar di datt.my.",
+  "token": {
+    "_nota": "D37: token yang dipapar di datt.my (status dari state/boltbook/lancar.json).",
+    "simbol": "MRADAR",
+    "wallet": "0xB51F437984C75f718052B0439561be3a9Da4cdF5"
   }
 }

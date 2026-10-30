@@ -5,6 +5,8 @@
   var teks = null, data = null, bahasa = "en";
 
   try { bahasa = localStorage.getItem(KUNCI_BAHASA) || ""; } catch (e) { bahasa = ""; }
+  var dariUrl = (location.search.match(/[?&]lang=(en|ms)\b/) || [])[1];  // hreflang (D38): ?lang=ms menang
+  if (dariUrl) bahasa = dariUrl;
   if (bahasa !== "en" && bahasa !== "ms") bahasa = (navigator.language || "").toLowerCase().indexOf("ms") === 0 ? "ms" : "en";
 
   function t(k, ganti) {
@@ -101,7 +103,200 @@
     }
     var masa = new Date(data.dijana * 1000).toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
     kaki.textContent = t("kaki_dijana", { masa: masa, blok: data.blok.toLocaleString(bahasa) });
+    lukisToken(data.token);
+    lukisUtama();
+    lukisSkop();
+    lukisPeta();
+    hadJadual();
+    lukisCukai();
+    lukisSebenar();
+    lukisSegar();
   }
+
+  // Pembuka (D39): tiga angka dari stats.json
+  function lukisUtama() {
+    var k24 = (data.kertas || []).filter(function (k) { return k.jam === 24; })[0];
+    document.getElementById("u-percuma").textContent = data.hari ? data.hari.percuma.toLocaleString(bahasa) : "\u2014";
+    document.getElementById("u-pembeli").textContent = k24 ? t("utama_daripada", { a: k24.ada_pembeli, b: k24.mint }) : "\u2014";
+    document.getElementById("u-merah").textContent = data.semakan_24j ? data.semakan_24j.merah.toLocaleString(bahasa) : "\u2014";
+  }
+
+  // Skop (D39): seperti radar sebenar — garis sapuan = sekarang; sudut di belakangnya = berapa lama dahulu ditanda (kontrak paling
+  // 2 jam = 300°), jarak dari tengah = log mint. Versi pertama (jejari = umur) mengumpul semua titik di tengah.
+  var NS = "http://www.w3.org/2000/svg", SAPU = -52 * Math.PI / 180;
+  function lukisSkop() {
+    var g = document.getElementById("skop-titik");
+    g.textContent = "";
+    var senarai = (data.terbaru || []).slice(0, 15), kini = Date.now() / 1000;
+    if (!senarai.length) return;
+    var tertua = 7200;  // tetingkap TETAP: 300° = 2 jam (relatif kepada senarai = semua titik di hadapan sapuan bila umur hampir sama)
+    var mints = senarai.map(function (s) { return Math.log(Math.max(2, s.mint)); });
+    var lo = Math.min.apply(null, mints), hi = Math.max.apply(null, mints);
+    senarai.forEach(function (s, i) {
+      var sud = SAPU - Math.min(1, (kini - s.ts_panas) / tertua) * (300 * Math.PI / 180);
+      var r = 40 + (hi > lo ? (mints[i] - lo) / (hi - lo) : 0.5) * 108;
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", (170 + r * Math.cos(sud)).toFixed(1));
+      c.setAttribute("cy", (170 + r * Math.sin(sud)).toFixed(1));
+      c.setAttribute("r", "6");
+      c.setAttribute("class", "titik-" + (s.keselamatan ? s.keselamatan.label : "belum"));
+      var tt = document.createElementNS(NS, "title");
+      tt.textContent = (s.nama || t("tanpa_nama")) + ": " + t("label_" + (s.keselamatan ? s.keselamatan.label : "belum")) + ", " + s.mint.toLocaleString(bahasa) + " mints, " + lalu(s.ts_panas);
+      c.appendChild(tt);
+      g.appendChild(c);
+    });
+  }
+
+  // D41: kesegaran (blok + umur data, berdetik), ke mana cukai pergi, rekod sebenar sebelum/selepas peraturan jualan
+  function tarikh(ts) {
+    return new Date(ts * 1000).toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  }
+  function lukisSegar() {
+    var e = document.getElementById("segar");
+    if (!data || !data.blok) { e.textContent = ""; return; }
+    var n = Math.max(0, Math.round(Date.now() / 1000 - data.dijana));
+    var umur = n < 120 ? t("saat_lalu", { n: n }) : lalu(data.dijana);
+    e.textContent = t("segar", { blok: data.blok.toLocaleString(bahasa), saat: umur });
+  }
+  setInterval(lukisSegar, 1000);
+
+  function baris(dl, label, nilai) {
+    var d = el("div");
+    d.appendChild(el("dt", null, label));
+    d.appendChild(el("dd", null, nilai));
+    dl.appendChild(d);
+  }
+  function angka(x, digit) { return x === null || x === undefined ? "\u2014" : Number(x).toLocaleString(bahasa, { maximumFractionDigits: digit }); }
+
+  function lukisCukai() {
+    var w = data.dompet || {}, tk = data.token || {};
+    var dl = document.getElementById("cukai-angka");
+    dl.textContent = "";
+    baris(dl, t("cukai_diterima"), tk.alamat ? (tk.cukai_bnb === null || tk.cukai_bnb === undefined ? "\u2014" : angka(tk.cukai_bnb, 6) + " BNB") : "0 BNB");
+    baris(dl, t("cukai_bnb"), w.bnb === null || w.bnb === undefined ? "\u2014" : angka(w.bnb, 5) + " BNB");
+    baris(dl, t("cukai_usdt"), w.usdt === null || w.usdt === undefined ? "\u2014" : angka(w.usdt, 2) + " USDT");
+    baris(dl, t("cukai_tx"), angka(w.nonce, 0));
+    var a = document.getElementById("cukai-wallet");
+    if (w.alamat) { a.textContent = w.alamat; a.href = "https://bscscan.com/address/" + w.alamat; }
+    var ul = document.getElementById("cukai-belanja");
+    ul.textContent = "";
+    var b = data.belanja || [];
+    if (!b.length) ul.appendChild(el("li", "kosong", t("cukai_belanja_kosong")));
+    b.forEach(function (x) {
+      var li = el("li");
+      li.appendChild(el("span", null, x.perkara + " \u2014 " + angka(x.bnb, 6) + " BNB"));
+      var l = el("a", "alamat", pendek(x.tx)); l.href = "https://bscscan.com/tx/" + x.tx; l.rel = "noopener";
+      li.appendChild(l);
+      ul.appendChild(li);
+    });
+  }
+
+  function lukisSebenar() {
+    var sb = data.sebenar, isi = document.getElementById("sebenar-isi");
+    isi.textContent = "";
+    if (!sb) return;
+    var ket = document.querySelector("[data-t=sebenar_ket]");
+    ket.textContent = t("sebenar_ket", { mula: sb.mula ? tarikh(sb.mula) : "\u2014" });
+    [["sebelum", "sebenar_sebelum_ket"], ["selepas", "sebenar_selepas_ket"]].forEach(function (b) {
+      var x = sb[b[0]], kad = el("div", "sebenar-kad");
+      kad.appendChild(el("h3", null, t("sebenar_" + b[0])));
+      kad.appendChild(el("p", "ket", t(b[1], { sejak: tarikh(sb.sejak) })));
+      var dl = el("dl", "sebenar-angka");
+      baris(dl, t("sebenar_mint"), angka(x.mint, 0));
+      baris(dl, t("sebenar_nft"), angka(x.disenarai + x.terjual + x.dipegang, 0));
+      baris(dl, t("sebenar_terjual"), angka(x.terjual, 0));
+      baris(dl, t("sebenar_gas"), angka(x.gas_bnb, 5) + " BNB");
+      var dd = (x.bersih_bnb >= 0 ? "+" : "\u2212") + Math.abs(x.bersih_bnb).toFixed(5) + " BNB";
+      baris(dl, t("sebenar_bersih"), dd);
+      dl.lastChild.lastChild.className = x.bersih_bnb >= 0 ? "positif" : "negatif";
+      kad.appendChild(dl);
+      isi.appendChild(kad);
+    });
+  }
+
+  // Jadual: 8 baris dahulu (SSR memapar semua; JS menyorok baki + butang)
+  var SEMUA = false, HAD = 8;
+  function hadJadual() {
+    var tr = document.querySelectorAll("#senarai-sentuhan tr"), b = document.getElementById("tunjuk-semua");
+    Array.prototype.forEach.call(tr, function (r, i) { r.hidden = !SEMUA && i >= HAD; });
+    b.hidden = tr.length <= HAD;
+    b.textContent = SEMUA ? t("tunjuk_kurang") : t("tunjuk_semua", { n: tr.length });
+    b.setAttribute("aria-expanded", SEMUA ? "true" : "false");
+  }
+  document.getElementById("tunjuk-semua").addEventListener("click", function () { SEMUA = !SEMUA; hadJadual(); });
+
+  // Peta haba: baris = kontrak, petak = minit; kecerahan ikut log mint (kaca laut)
+  function lukisPeta() {
+    var isi = document.getElementById("peta-isi");
+    isi.textContent = "";
+    var p = data.peta && data.peta.kontrak || [];
+    if (!p.length) { isi.appendChild(el("p", "peta-kosong", t("peta_kosong"))); return; }
+    var mx = 1;
+    p.forEach(function (k) { k.minit.forEach(function (v) { if (v > mx) mx = v; }); });
+    p.forEach(function (k) {
+      var baris = el("div", "peta-baris");
+      var nama = el("div", "peta-nama");
+      nama.appendChild(el("b", null, k.nama || t("tanpa_nama")));
+      var lab = k.label || "belum";
+      nama.appendChild(el("span", "lencana lencana-" + lab, t("label_" + lab)));
+      nama.appendChild(el("span", null, k.jualan ? t("peta_jualan", { n: k.jualan }) : t("peta_tiada_jualan")));
+      baris.appendChild(nama);
+      var petak = el("div", "petak");
+      k.minit.forEach(function (v) {
+        var i = el("i");
+        if (v > 0) i.style.background = "rgba(159,227,212," + (0.22 + 0.78 * Math.log(1 + v) / Math.log(1 + mx)).toFixed(2) + ")";
+        petak.appendChild(i);
+      });
+      baris.appendChild(petak);
+      baris.appendChild(el("div", "peta-jumlah", k.jumlah.toLocaleString(bahasa)));
+      isi.appendChild(baris);
+    });
+  }
+
+  // Token $MRADAR (D37): tersorok tanpa data; sebelum lancar = masa lancar; selepas = alamat + angka (sengkang = tiada angka)
+  function wang(x, digit) {
+    if (x === null || x === undefined) return "\u2014";
+    if (digit) return "$" + Number(x).toPrecision(digit);
+    return "$" + Math.round(x).toLocaleString(bahasa);
+  }
+  function lukisToken(k) {
+    var sek = document.getElementById("token");
+    if (!k || k.status === "rejected" || k.status === "failed") { sek.hidden = true; return; }
+    sek.hidden = false;
+    var tunggu = document.getElementById("token-menunggu"), hidup = document.getElementById("token-hidup");
+    if (!k.alamat) {
+      hidup.hidden = true;
+      tunggu.hidden = false;
+      var bila = k.lancar_pada ? new Date(k.lancar_pada) : null;
+      tunggu.textContent = bila && bila > new Date()
+        ? t(k.status === "review" ? "token_semakan" : "token_menunggu", { masa: bila.toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }) })
+        : t("token_menunggu_lalu");
+      return;
+    }
+    tunggu.hidden = true;
+    hidup.hidden = false;
+    document.getElementById("token-alamat").textContent = k.alamat;
+    document.getElementById("token-flap").href = k.flap_url || ("https://flap.sh/bnb/" + k.alamat);
+    document.getElementById("token-bscscan").href = "https://bscscan.com/token/" + k.alamat;
+    document.getElementById("token-dex").href = "https://dexscreener.com/bsc/" + k.alamat;
+    var dl = document.getElementById("token-angka");
+    dl.textContent = "";
+    [["token_harga", wang(k.harga_usd, 3)], ["token_mcap", wang(k.mcap_usd)], ["token_likuiditi", wang(k.likuiditi_usd)],
+     ["token_volume", wang(k.volume_24j_usd)], ["token_pemegang", k.pemegang ? k.pemegang.toLocaleString(bahasa) : "\u2014"],
+     ["token_cukai", k.cukai_bnb === null || k.cukai_bnb === undefined ? "\u2014" : bnb(k.cukai_bnb)]].forEach(function (r) {
+      var d = el("div");
+      d.appendChild(el("dt", null, t(r[0])));
+      d.appendChild(el("dd", null, r[1]));
+      dl.appendChild(d);
+    });
+  }
+
+  document.getElementById("token-salin").addEventListener("click", function () {
+    var b = this, a = document.getElementById("token-alamat").textContent;
+    function siap() { b.textContent = t("token_disalin"); setTimeout(function () { b.textContent = t("token_salin"); }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(a).then(siap, function () {});
+    else { var r = document.createRange(); r.selectNodeContents(document.getElementById("token-alamat")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  });
 
   function teksTemuan(x) {
     return t("temuan_" + x.kod, { fungsi: x.fungsi ? x.fungsi + "()" : "" });

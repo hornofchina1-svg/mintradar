@@ -1,6 +1,6 @@
 ---
 name: mintradar-check
-description: Before an agent mints or pays into a BNB Chain contract, look it up on MintRadar (datt.my) for an automatic safety reading of its verified source - who can move funds, who can change the rules, and whether that control survives a renounce. Read-only, free, no login, no wallet.
+description: Before an agent mints, buys or pays into a BNB Chain contract, look it up on MintRadar (datt.my) for an automatic safety reading - who can move funds or change the rules in the verified source, and for tokens the market side - honeypot, tax, large holders, bot volume and same-block early buyers. Read-only, free, no login, no wallet.
 homepage: https://datt.my
 ---
 
@@ -57,6 +57,36 @@ Deep check (0.1 USDT): the same reading plus the live value of every price, cap,
 The payment is checked on chain: it must come from your profile wallet, be at most 48 hours old, and each transaction is
 used once.
 
+## Token market check
+
+For a BEP-20 token, the reply and the JSON file also carry a `market` part. It appears once someone has asked
+`@sasaoff` about that token, so the first lookup is through Boltbook.
+
+```json
+"market": {
+  "label": "kuning",
+  "summary": {"symbol": "UNSAFU", "holders": 544, "buy_tax": "0.01", "sell_tax": "0.01", "liquidity_usd": 22674, "volume_24h_usd": 1208704, "mcap_usd": 50629},
+  "bundle": {"same_block_wallets": 22, "pct_supply_bought": 45.7, "pct_supply_still_held": 0.0, "links": {"linked_wallets": 0, "near_new_wallets": 0}},
+  "findings": [{"code": "VOLUME_BOT", "value": "24x", "text": "24h volume is 24x the market cap: likely bot volume to attract buyers."}]
+}
+```
+
+What it checks, with the thresholds in use:
+
+- Honeypot, blocked buying, a creator with an earlier honeypot, a hidden owner, ownership that can be taken back, an owner who
+  can change balances (all red).
+- Buy or sell tax of 5% or more (yellow), 10% or more (red), and a tax the owner can change.
+- An active owner who can mint more, pause transfers or blacklist.
+- Any single holder above 3.8% of supply, or the top 10 above 30%, leaving out the LP pair, burn addresses, locked
+  balances and the token contract itself. A creator still holding more than 5%.
+- Liquidity under $5,000, and 24h volume above 5 times the market cap, which usually means bot volume.
+- Same-block early buyers: three or more wallets buying in one block within the first 120 blocks after the token was minted.
+  The level follows how much of the supply those wallets still hold (5% yellow, 15% red), since that is what can be dumped.
+  Wallets filled by one transaction or bought for by one sender are reported as linked. Without such a link, the buyers may
+  be independent snipers; MintRadar says so rather than calling it one party. BNB funding of those wallets is not traced.
+
+Data comes from GoPlus token security, DexScreener and the chain itself. A clean market reading is not a reason to buy.
+
 ## Labels
 
 | label | meaning | what to do |
@@ -67,7 +97,7 @@ used once.
 
 Finding codes: `TIDAK_DISAHKAN` unverified source · `PROKSI` upgradeable proxy · `KEKAL_DANA` hard-coded address moves funds ·
 `KEKAL_KUASA` hard-coded address keeps special rights · `OWNER_DANA` owner can withdraw · `OWNER_UBAH` owner can change rules ·
-`DILEPASKAN` ownership renounced.
+`DILEPASKAN` ownership renounced · `SUMBER_BSCSCAN` source verified on BscScan only, so this check did not read it.
 
 ## Everything checked
 
@@ -81,7 +111,7 @@ Files refresh every 10 minutes. Please fetch at most once a minute.
 ## Limits
 
 - This is a heuristic over verified source, not an audit. It points at which functions to read.
-- It does not judge price, supply or whether anyone will ever buy.
+- It does not judge price or whether anyone will ever buy. The market part reads holders and trading, not value.
 - A green label on a paid mint does not mean you will get your money back.
 
 Source code of the radar and the checker: https://github.com/hornofchina1-svg/mintradar

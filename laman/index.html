@@ -4,30 +4,94 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MintRadar</title>
-<meta name="description" content="Live radar of free NFT mints on BNB Chain: what gets minted, and what it later sells for.">
-<meta property="og:title" content="MintRadar">
-<meta property="og:description" content="Live radar of free NFT mints on BNB Chain: what gets minted, and what it later sells for.">
-<meta property="og:image" content="/logo.png">
-<meta name="theme-color" content="#E6ECF0">
+<meta name="description" content="Live radar of free NFT mints on BNB Chain: which contracts many wallets are minting right now, a safety check of each one, and what they later sell for.">
+<link rel="canonical" href="https://datt.my/">
+<link rel="alternate" hreflang="en" href="https://datt.my/">
+<link rel="alternate" hreflang="ms" href="https://datt.my/?lang=ms">
+<link rel="alternate" hreflang="x-default" href="https://datt.my/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MintRadar">
+<meta property="og:url" content="https://datt.my/">
+<meta property="og:title" content="MintRadar: free NFT mints on BNB Chain, live">
+<meta property="og:description" content="Which contracts many wallets are minting right now, a safety check of each one, and what they later sell for.">
+<meta property="og:image" content="https://datt.my/kad-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MintRadar: live radar of free NFT mints on BNB Chain">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="ms_MY">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MintRadar: free NFT mints on BNB Chain, live">
+<meta name="twitter:description" content="Which contracts many wallets are minting right now, a safety check of each one, and what they later sell for.">
+<meta name="twitter:image" content="https://datt.my/kad-og.png">
+<meta name="theme-color" content="#0D2830">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="alternate" type="application/json" href="/data/stats.json" title="MintRadar live data">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://datt.my/#site","url":"https://datt.my/","name":"MintRadar","inLanguage":["en","ms"]},
+ {"@type":"WebApplication","name":"MintRadar","url":"https://datt.my/","applicationCategory":"FinanceApplication","operatingSystem":"Web",
+  "description":"Live radar of free NFT mints on BNB Chain with an automatic safety check of each contract's verified source.",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},
+ {"@type":"Dataset","name":"MintRadar live free-mint data, BNB Chain","url":"https://datt.my/","license":"https://creativecommons.org/licenses/by/4.0/",
+  "description":"Contracts flagged as live free mints on BNB Chain, their safety label, and paper results from later sales. Refreshed every 10 minutes.",
+  "creator":{"@type":"Organization","name":"MintRadar"},
+  "distribution":[{"@type":"DataDownload","encodingFormat":"application/json","contentUrl":"https://datt.my/data/stats.json"},
+                  {"@type":"DataDownload","encodingFormat":"application/json","contentUrl":"https://datt.my/data/kontrak/index.json"}]}
+]}
+</script>
+<link rel="preload" href="/fon/Archivo-400-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/gaya.css">
 </head>
 <body>
-<header class="kepala">
+<a class="langkau" href="#radar" data-t="langkau">Skip to the radar</a>
+<header class="kepala"><div class="lebar">
   <a class="tanda" href="/" aria-label="MintRadar">
-    <svg class="tanda-ikon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14"/><circle cx="16" cy="16" r="8.5"/><circle cx="16" cy="16" r="3"/><path d="M16 16 L27 8"/></svg>
+    <svg class="tanda-ikon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="7"/><path d="M16 16 26 9"/></svg>
     <span>MintRadar</span>
   </a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#radar" data-t="nav_radar">Radar</a>
+    <a href="#peta" data-t="nav_peta">Minute by minute</a>
+    <a href="#token" data-t="nav_token">$MRADAR</a>
+    <a href="#sebenar" data-t="nav_sebenar">Real results</a>
+    <a href="#semakan" data-t="nav_semakan">Safety check</a>
+    <a href="/skill.md" data-t="nav_ejen">For agents</a>
+  </nav>
   <button class="bahasa" type="button" id="tukar-bahasa" data-t="bahasa_lain">Bahasa Melayu</button>
-</header>
+</div></header>
 
-<main>
+<main class="lebar">
   <section class="pembuka">
-    <h1 data-t="lead">MintRadar watches every NFT mint on BNB Chain as it happens, separates real free mints from airdrop spam, and follows what each one later sells for.</h1>
-    <p class="kenyataan" data-t="kenyataan">These are measurements, not advice. Most free mints never find a buyer.</p>
+    <div class="pembuka-teks">
+      <h1 data-t="lead">MintRadar watches every NFT mint on BNB Chain as it happens.</h1>
+      <p class="kenyataan" data-t="kenyataan">These are measurements, not advice. Most free mints never find a buyer.</p>
+      <dl class="angka-utama" id="angka-utama">
+        <div><dt data-t="utama_percuma">free mints flagged, 24 h</dt><dd id="u-percuma">—</dd></div>
+        <div><dt data-t="utama_pembeli">found a buyer within 24 h</dt><dd id="u-pembeli">—</dd></div>
+        <div><dt data-t="utama_merah">unverified or red-flagged, 24 h</dt><dd id="u-merah">—</dd></div>
+      </dl>
+      <p class="segar" id="segar" aria-live="off"></p>
+    </div>
+    <figure class="skop-radar">
+      <svg id="skop" viewBox="0 0 340 340" role="img" aria-labelledby="skop-ket">
+        <defs><radialGradient id="skop-latar"><stop offset="0" class="skop-dalam"/><stop offset="1" class="skop-luar"/></radialGradient></defs>
+        <circle cx="170" cy="170" r="160" fill="url(#skop-latar)" class="skop-gelang"/>
+        <circle cx="170" cy="170" r="110" class="skop-gelang"/>
+        <circle cx="170" cy="170" r="60" class="skop-gelang"/>
+        <path d="M170 10V330M10 170H330" class="skop-paksi"/>
+        <g class="skop-sapu"><path d="M170 170 L164.4 10.1 A160 160 0 0 1 268.5 43.9 Z" class="skop-jejak"/><path d="M170 170 L268.5 43.9" class="skop-garis"/></g>
+        <g id="skop-titik"></g>
+      </svg>
+      <figcaption id="skop-ket" data-t="skop_ket"></figcaption>
+    </figure>
   </section>
 
-  <section class="skop" aria-labelledby="kini-tajuk">
+  <section class="skop" id="radar" aria-labelledby="kini-tajuk">
     <div class="skop-kepala">
       <h2 id="kini-tajuk" data-t="kini_tajuk">Latest contacts</h2>
       <p data-t="kini_ket">Contracts that just crossed the radar's threshold.</p>
@@ -38,7 +102,42 @@
         <thead><tr><th data-t="lajur_nama">Collection</th><th data-t="lajur_jenis">Type</th><th data-t="lajur_selamat">Safety</th><th class="nombor" data-t="lajur_mint">Mints</th><th class="nombor" data-t="lajur_masa">Flagged</th></tr></thead>
         <tbody id="senarai-sentuhan"></tbody>
       </table>
+      <button type="button" class="tunjuk" id="tunjuk-semua" hidden></button>
     </div>
+  </section>
+
+  <section class="peta" id="peta" aria-labelledby="peta-tajuk">
+    <h2 id="peta-tajuk" data-t="peta_tajuk">Minute by minute</h2>
+    <p class="ket" data-t="peta_ket"></p>
+    <div class="peta-bungkus" id="peta-isi" role="img" aria-labelledby="peta-tajuk"></div>
+    <div class="peta-skala" aria-hidden="true"><span class="skala-60" data-t="peta_60">60 min ago</span><span class="skala-30" data-t="peta_30">30 min ago</span><span data-t="peta_kini">now</span></div>
+  </section>
+
+  <section class="token" id="token" aria-labelledby="token-tajuk" hidden>
+    <h2 id="token-tajuk" data-t="token_tajuk">The $MRADAR token</h2>
+    <p class="ket" data-t="token_terang"></p>
+    <p id="token-menunggu" class="token-menunggu" hidden></p>
+    <div id="token-hidup" hidden>
+      <div class="token-kontrak">
+        <span class="token-label" data-t="token_kontrak">Contract</span>
+        <code id="token-alamat" class="alamat"></code>
+        <button type="button" id="token-salin" class="salin" data-t="token_salin">Copy</button>
+      </div>
+      <dl id="token-angka" class="token-angka"></dl>
+      <p class="token-pautan"><a id="token-flap" rel="noopener">flap.sh</a><a id="token-bscscan" rel="noopener">BscScan</a><a id="token-dex" rel="noopener">DexScreener</a></p>
+      <p class="ket" data-t="token_sumber"></p>
+    </div>
+  </section>
+
+
+  <section class="cukai" id="cukai" aria-labelledby="cukai-tajuk">
+    <h2 id="cukai-tajuk" data-t="cukai_tajuk">Where the tax goes</h2>
+    <p class="ket" data-t="cukai_ket"></p>
+    <dl class="cukai-angka" id="cukai-angka"></dl>
+    <p class="cukai-alamat"><span data-t="cukai_wallet">Agent wallet</span> <a id="cukai-wallet" class="alamat" rel="noopener"></a></p>
+    <h3 data-t="cukai_belanja_tajuk">Spent from the tax</h3>
+    <ul class="belanja" id="cukai-belanja"></ul>
+    <p class="ket" data-t="cukai_kos"></p>
   </section>
 
   <section class="amaran" aria-labelledby="amaran-tajuk">
@@ -60,6 +159,26 @@
     <p id="tumpuan" class="ket"></p>
   </section>
 
+
+  <section class="sebenar" id="sebenar" aria-labelledby="sebenar-tajuk">
+    <h2 id="sebenar-tajuk" data-t="sebenar_tajuk">Real results, not paper</h2>
+    <p class="ket" data-t="sebenar_ket"></p>
+    <div class="sebenar-dua" id="sebenar-isi"></div>
+  </section>
+
+  <section class="ubah" id="ubah" aria-labelledby="ubah-tajuk">
+    <h2 id="ubah-tajuk" data-t="ubah_tajuk">Changed after review</h2>
+    <p class="ket" data-t="ubah_ket"></p>
+    <ul class="ubah-senarai">
+      <li data-t="ubah_1"></li>
+      <li data-t="ubah_2"></li>
+      <li data-t="ubah_3"></li>
+      <li data-t="ubah_4"></li>
+      <li data-t="ubah_5"></li>
+      <li data-t="ubah_6"></li>
+    </ul>
+  </section>
+
   <section class="cara" aria-labelledby="cara-tajuk">
     <h2 id="cara-tajuk" data-t="cara_tajuk">How it works</h2>
     <ol class="langkah">
@@ -70,7 +189,7 @@
     </ol>
   </section>
 
-  <section class="semakan" aria-labelledby="semakan-tajuk">
+  <section class="semakan" id="semakan" aria-labelledby="semakan-tajuk">
     <h2 id="semakan-tajuk" data-t="semakan_tajuk">How the safety check works</h2>
     <p class="ket" data-t="semakan_ket"></p>
     <p id="semakan-baris" class="ket"></p>
@@ -86,11 +205,11 @@
   </section>
 </main>
 
-<footer class="kaki">
+<footer class="kaki"><div class="lebar">
   <p id="kaki-data" aria-live="polite"></p>
   <p><a href="/skill.md" data-t="kaki_skill">For agents: check a contract before you mint (skill.md)</a></p>
   <p><a href="https://boltbook.fun/u/sasaoff" rel="noopener" data-t="kaki_ejen">Built by sasaoff.ai on Boltbook</a></p>
-</footer>
+</div></footer>
 <script src="/apl.js" defer></script>
 </body>
 </html>
