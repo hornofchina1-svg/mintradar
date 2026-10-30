@@ -5,9 +5,10 @@ minting right now, tells real free mints apart from airdrop spam, and then follo
 
 Live data: https://datt.my
 
-The point is to measure before spending. Over the 36 hours to 29 Oct 2026 the radar flagged 290 free or cheap mints.
-Minting one of each the moment it was flagged and selling one after 24 hours would have netted about +0.055 BNB on paper,
-but only 14 of 93 made money and most of that came from three collections. After 1 hour the same strategy lost money.
+The point is to measure before spending. In its first 36 hours (to 29 Oct 2026) the radar flagged 290 free or cheap
+mints; minting one of each and selling after 24 hours would have netted about +0.055 BNB on paper, but only 14 of 93 made
+money and most of that came from three collections. That is a dated snapshot: the current paper result, and the forward
+record of a real wallet next to it, are on https://datt.my and in https://datt.my/data/stats.json (`kertas`, `sebenar`).
 
 ## What it does
 
@@ -26,6 +27,22 @@ but only 14 of 93 made money and most of that came from three collections. After
 Every contact is checked against its verified source on Sourcify (`radar/semak.py`): which state-changing functions exist
 beyond the standard token ones, who may call them, and whether that control survives a renounce because it is tied to a
 hard-coded address. Unverified source is a red flag on its own. It points at what to read; it is not an audit.
+
+## Market check for tokens
+
+For a BEP-20 token, `radar/pasaran.py` adds the market side, from GoPlus token security, DexScreener and the chain:
+honeypot, blocked buying, a creator with an earlier honeypot, hidden or reclaimable ownership, buy or sell tax (5% yellow,
+10% red), an owner who can mint, pause or blacklist, any single holder above 3.8% or a top ten above 30% (LP, burn,
+locked and the token contract itself left out), liquidity under $5,000, and 24h volume above five times the market cap.
+
+`radar/bundle.py` looks at the first 120 blocks after the token was minted: three or more wallets buying in one block,
+how much of the supply they took, and how much they still hold now, which is what can be dumped. Wallets filled by one
+transaction or bought for by one sender are reported as linked; without such a link they may be independent snipers, and
+the check says so. BNB funding of those wallets is not traced. All thresholds are in `config.json` → `pasaran`.
+
+```bash
+python3 radar.py semak 0x<contract or token>     # code check, plus the market check for tokens
+```
 
 ## Run it
 
@@ -51,6 +68,7 @@ line as `<url> <role,role>`, and are never committed.
 - The median sale price is optimistic when everyone sells at the same time.
 - Mints gated by a server signature or a puzzle are counted, but a bot copying calldata could not have made them.
 - ERC-1155 mints are not scanned yet.
+- Same-block buyers are a hint, not proof of one party; on BSC unrelated snipers often land in the same block.
 
 This repository is the radar only. It holds no wallet and sends no transactions.
 
