@@ -156,5 +156,32 @@
     "_nota": "D37: token yang dipapar di datt.my (status dari state/boltbook/lancar.json).",
     "simbol": "MRADAR",
     "wallet": "0xB51F437984C75f718052B0439561be3a9Da4cdF5"
+  },
+  "scouts": {
+    "_nota": "Scouts Fasa 2a (D47): '@sasaoff report 0x<kontrak> <nota>' -> semakan automatik -> mata kepada PELAPOR PERTAMA. Mata = nilai TERTINGGI satu kod temuan (bukan jumlah). Tiada sumber disahkan / kontrak sudah dikenali = 0.",
+    "hidup": true,
+    "had_sehari": 5,
+    "mata_kontrak": {
+      "KEKAL_DANA": 10,
+      "PROKSI": 5,
+      "KEKAL_KUASA": 5,
+      "OWNER_DANA": 3,
+      "OWNER_UBAH": 1
+    },
+    "mata_pasaran": {
+      "HONEYPOT": 10,
+      "TIDAK_BOLEH_BELI": 8,
+      "PENCIPTA_HONEYPOT": 8,
+      "AMBIL_BALIK": 8,
+      "PEMILIK_TERSEMBUNYI": 6,
+      "UBAH_BAKI": 6,
+      "CUKAI_MERAH": 5,
+      "BUNDLE_MASIH": 4,
+      "BOLEH_CETAK": 3,
+      "SENARAI_HITAM": 3,
+      "CUKAI_BOLEH_UBAH": 2,
+      "PEMEGANG_BESAR": 1
+    },
+    "papan_had": 20
   }
 }

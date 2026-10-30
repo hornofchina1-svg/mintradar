@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS penerima (alamat TEXT, penerima TEXT, minit_ts INTEGE
 CREATE INDEX IF NOT EXISTS penerima_ts ON penerima (alamat, minit_ts);
 CREATE TABLE IF NOT EXISTS semakan (alamat TEXT PRIMARY KEY, ts INTEGER, label TEXT, temuan TEXT, admin TEXT, nama_kontrak TEXT);
 CREATE TABLE IF NOT EXISTS pasaran (alamat TEXT PRIMARY KEY, ts INTEGER, label TEXT, temuan TEXT, ringkas TEXT, bundle TEXT);
+CREATE TABLE IF NOT EXISTS scout_lapor (alamat TEXT PRIMARY KEY, pengarang TEXT, ts INTEGER, mata INTEGER, kod TEXT, post_id TEXT);
 CREATE INDEX IF NOT EXISTS minit_ts ON minit (minit_ts);
 CREATE INDEX IF NOT EXISTS kontrak_panas ON kontrak (ts_panas);
 """

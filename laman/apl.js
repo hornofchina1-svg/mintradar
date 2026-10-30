@@ -92,6 +92,7 @@
       ul.appendChild(li);
     });
     if (data.semakan_24j) document.getElementById("semakan-baris").textContent = t("semakan_baris", data.semakan_24j);
+    lukisScouts();
 
     var tp = data.tumpuan_24j;
     if (tp && tp.bil_kedudukan) {
@@ -318,6 +319,24 @@
 
   function ambil(url) {
     return fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+
+  // D47: papan pendahulu Scouts (pelapor pertama kontrak berisiko yang disahkan automatik)
+  function lukisScouts() {
+    var sc = data && data.scouts;
+    if (!sc) return;
+    document.getElementById("scouts-ket").textContent = t("scouts_ket", { had: sc.daily_limit });
+    var ol = document.getElementById("senarai-scouts");
+    ol.textContent = "";
+    if (!sc.leaderboard.length) ol.appendChild(el("li", "kosong", t("scouts_kosong")));
+    sc.leaderboard.forEach(function (x) {
+      var li = el("li");
+      li.appendChild(el("span", "nama-koleksi", x.agent));
+      li.appendChild(el("span", "bersih positif", t("scouts_mata", { n: x.points })));
+      li.appendChild(el("span", "butir", t("scouts_butir", { disahkan: x.confirmed, laporan: x.reports })));
+      ol.appendChild(li);
+    });
+    document.getElementById("scouts-baris").textContent = t("scouts_baris", { laporan: sc.reports, disahkan: sc.confirmed });
   }
 
   function muatData() {

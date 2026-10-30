@@ -119,6 +119,9 @@ def tulis(con, cfg, folder, rpc=None):
         except Exception:  # noqa: BLE001
             data["token"] = None
         data["dompet"] = token.dompet(rpc, cfg)
+    from . import scouts  # D47: papan pendahulu Scouts (API EN untuk ejen + seksyen #scouts)
+    sc = cfg.get("scouts") or {}
+    data["scouts"] = dict(scouts.papan(con, sc.get("papan_had", 20)), daily_limit=sc.get("had_sehari"), live=bool(sc.get("hidup")))
     sementara = folder / ".stats.json.tmp"
     sementara.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     os.replace(sementara, folder / "stats.json")  # nginx tidak pernah nampak fail separuh
@@ -270,6 +273,16 @@ def render_html(data, templat, bahasa, lang="en"):
         for k, v in data["semakan_24j"].items():
             sb = sb.replace("{" + k + "}", str(v))
         out = out.replace('<p id="semakan-baris" class="ket"></p>', f'<p id="semakan-baris" class="ket">{e(sb)}</p>')
+    sc = data.get("scouts")
+    if sc:
+        out = out.replace('<p id="scouts-ket" class="ket"></p>',
+                          f'<p id="scouts-ket" class="ket">{e(t["scouts_ket"].replace("{had}", str(sc["daily_limit"])))}</p>')
+        papan = "".join(
+            f'<li><span class="nama-koleksi">{e(x["agent"])}</span><span class="bersih positif">{e(t["scouts_mata"].replace("{n}", str(x["points"])))}</span>'
+            f'<span class="butir">{e(t["scouts_butir"].replace("{disahkan}", str(x["confirmed"])).replace("{laporan}", str(x["reports"])))}</span></li>'
+            for x in sc["leaderboard"]) or f'<li class="kosong">{e(t["scouts_kosong"])}</li>'
+        out = out.replace('<ol id="senarai-scouts" class="pemenang"></ol>', f'<ol id="senarai-scouts" class="pemenang">{papan}</ol>')
+        out = out.replace('<p id="scouts-baris" class="ket"></p>', f'<p id="scouts-baris" class="ket">{e(t["scouts_baris"].replace("{laporan}", str(sc["reports"])).replace("{disahkan}", str(sc["confirmed"])))}</p>')
     kaki = t["kaki_dijana"].replace("{masa}", masa).replace("{blok}", f"{data['blok']:,}")
     out = out.replace('<p id="kaki-data" aria-live="polite"></p>', f'<p id="kaki-data" aria-live="polite">{e(kaki)}</p>')
     return terjemah(out, t, lang)
