@@ -4,10 +4,10 @@
   var KUNCI_BAHASA = "mintradar-bahasa";
   var teks = null, data = null, bahasa = "en";
 
-  try { bahasa = localStorage.getItem(KUNCI_BAHASA) || ""; } catch (e) { bahasa = ""; }
-  var dariUrl = (location.search.match(/[?&]lang=(en|ms)\b/) || [])[1];  // hreflang (D38): ?lang=ms menang
-  if (dariUrl) bahasa = dariUrl;
-  if (bahasa !== "en" && bahasa !== "ms") bahasa = (navigator.language || "").toLowerCase().indexOf("ms") === 0 ? "ms" : "en";
+  // D43: bahasa = URL (/ = EN, /ms/ = BM; teks sudah dipapar pelayan). Pautan lama ?lang=ms dialih ke /ms/.
+  if (/[?&]lang=ms\b/.test(location.search) && location.pathname.indexOf("/ms/") !== 0) { location.replace("/ms/" + location.hash); return; }
+  bahasa = location.pathname.indexOf("/ms/") === 0 ? "ms" : "en";
+  try { localStorage.setItem(KUNCI_BAHASA, bahasa); } catch (e) { /* pelayar peribadi: abaikan */ }
 
   function t(k, ganti) {
     var s = (teks && teks[bahasa] && teks[bahasa][k]) || "";
@@ -103,6 +103,8 @@
     }
     var masa = new Date(data.dijana * 1000).toLocaleString(bahasa === "ms" ? "ms-MY" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
     kaki.textContent = t("kaki_dijana", { masa: masa, blok: data.blok.toLocaleString(bahasa) });
+    window.MR_DATA = data;
+    document.dispatchEvent(new CustomEvent("mr-data", { detail: data }));
     lukisToken(data.token);
     lukisUtama();
     lukisSkop();
@@ -322,15 +324,103 @@
     return ambil("/data/stats.json").then(function (d) { data = d; }, function () { data = null; }).then(lukisData);
   }
 
-  document.getElementById("tukar-bahasa").addEventListener("click", function () {
-    bahasa = bahasa === "en" ? "ms" : "en";
-    try { localStorage.setItem(KUNCI_BAHASA, bahasa); } catch (e) { /* pelayar peribadi: abaikan */ }
-    lukisTeks();
-    lukisData();
+  // Menu telefon: tutup selepas memilih pautan atau Escape
+  var menu = document.getElementById("menu");
+  menu.addEventListener("click", function (ev) { if (ev.target.closest("a")) menu.open = false; });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && menu.open) { menu.open = false; menu.querySelector("summary").focus(); } });
+
+  // D43: penyemak kontrak — /data/kontrak/<alamat>.json (ditulis radar setiap semakan); tiada = arahan @sasaoff
+  var ALAMAT = new RegExp("^0x[0-9a-fA-F]{40}$");
+  function salinButang(teksSalin) {
+    var b = el("button", "salin", t("periksa_salin"));
+    b.type = "button";
+    b.addEventListener("click", function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(teksSalin).then(function () {
+        b.textContent = t("periksa_disalin"); setTimeout(function () { b.textContent = t("periksa_salin"); }, 1600);
+      }, function () {});
+    });
+    return b;
+  }
+  function senaraiTemuan(tajuk, label, temuan) {
+    var kad = el("div", "periksa-kad");
+    var h = el("h3"); h.appendChild(document.createTextNode(tajuk + " "));
+    h.appendChild(el("span", "lencana lencana-" + label, t("umum_" + label)));  // label umum: kuning pasaran ≠ "kuasa owner"
+    kad.appendChild(h);
+    var ul = el("ul");
+    temuan.forEach(function (x) { ul.appendChild(el("li", null, x)); });
+    kad.appendChild(ul);
+    return kad;
+  }
+  var disemak = null, disemakPada = 0;
+  function senaraiDisemak() {
+    if (disemak && Date.now() - disemakPada < 300000) return Promise.resolve(disemak);
+    return fetch("/data/kontrak/index.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : { contracts: [] }; }).then(function (j) {
+      disemak = {}; disemakPada = Date.now();
+      (j.contracts || []).forEach(function (c) { disemak[c.address.toLowerCase()] = 1; });
+      return disemak;
+    });
+  }
+  document.getElementById("periksa-borang").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var a = document.getElementById("periksa-alamat").value.trim(), hasil = document.getElementById("periksa-hasil");
+    hasil.textContent = "";
+    if (!ALAMAT.test(a)) { hasil.appendChild(el("p", "periksa-salah", t("periksa_salah"))); return; }
+    a = a.toLowerCase();
+    hasil.appendChild(el("p", "ket", t("periksa_memuat")));
+    // index.json dahulu: alamat belum disemak dijawab tanpa permintaan 404 (pelayar mencatat setiap 404 sebagai ralat konsol)
+    senaraiDisemak().then(function (ada) {
+      return ada[a] ? fetch("/data/kontrak/" + a + ".json", { cache: "no-store" }) : { status: 404 };
+    }).then(function (r) {
+      hasil.textContent = "";
+      if (r.status === 404) {
+        hasil.appendChild(el("p", null, t("periksa_tiada")));
+        var baris = el("div", "periksa-sebut");
+        var kod = "@sasaoff " + a;
+        baris.appendChild(el("code", "alamat", kod));
+        baris.appendChild(salinButang(kod));
+        hasil.appendChild(baris);
+        return null;
+      }
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function (d) {
+      if (!d) return;
+      var kepala = el("div", "periksa-kepala");
+      kepala.appendChild(el("b", null, d.name || pendek(d.address)));
+      kepala.appendChild(el("span", "lencana lencana-" + d.label, t("umum_" + d.label)));
+      kepala.appendChild(el("span", "ket", t("periksa_disemak", { masa: lalu(d.checked_at) })));
+      hasil.appendChild(kepala);
+      // teks dari KOD temuan dalam bahasa halaman (JSON kontrak ditulis EN untuk ejen); kod tidak dikenali = teks JSON
+      var kod = (d.findings || []).filter(function (x) { return x.code !== "DILEPASKAN"; }).map(function (x) {
+        return t("temuan_" + x.code, { fungsi: x["function"] ? x["function"] + "()" : "" }) || x.text;
+      });
+      hasil.appendChild(senaraiTemuan(t("periksa_kod"), d.label, kod.length ? kod : [t("periksa_bersih")]));
+      if (d.market) hasil.appendChild(senaraiTemuan(t("periksa_pasaran"), d.market.label, (d.market.findings || []).map(function (x) {
+        return t("pasaran_" + x.code, { nilai: x.value }) || x.text;
+      })));
+      var p = el("p", "periksa-pautan");
+      var l = el("a", null, t("periksa_json")); l.href = "/data/kontrak/" + a + ".json";
+      p.appendChild(l);
+      var bs = el("a", null, "BscScan"); bs.href = "https://bscscan.com/address/" + a; bs.rel = "noopener";
+      p.appendChild(bs);
+      hasil.appendChild(p);
+    }).catch(function () { hasil.textContent = ""; hasil.appendChild(el("p", "periksa-salah", t("periksa_gagal"))); });
   });
+
+  // D43: medan 3D — dimuat HANYA bila WebGL ada, tiada "kurangkan data", selepas data sedia; gagal = skop SVG kekal
+  function muat3D() {
+    if (window.MR_3D || navigator.connection && navigator.connection.saveData) return;
+    var c = document.createElement("canvas");
+    if (!(c.getContext("webgl2") || c.getContext("webgl"))) return;
+    window.MR_3D = true;
+    var sc = document.createElement("script");
+    sc.type = "module"; sc.src = "/medan3d.js?v=1";
+    document.body.appendChild(sc);
+  }
 
   ambil("/bahasa.json").then(function (b) { teks = b; lukisTeks(); return muatData(); }).then(function () {
     document.body.classList.add("sedia");
+    muat3D();
   });
   setInterval(muatData, 60000);
 })();

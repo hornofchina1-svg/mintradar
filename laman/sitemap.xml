@@ -3,14 +3,14 @@
   <url>
     <loc>https://datt.my/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://datt.my/"/>
-    <xhtml:link rel="alternate" hreflang="ms" href="https://datt.my/?lang=ms"/>
+    <xhtml:link rel="alternate" hreflang="ms" href="https://datt.my/ms/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://datt.my/"/>
     <changefreq>hourly</changefreq>
   </url>
   <url>
-    <loc>https://datt.my/?lang=ms</loc>
+    <loc>https://datt.my/ms/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://datt.my/"/>
-    <xhtml:link rel="alternate" hreflang="ms" href="https://datt.my/?lang=ms"/>
+    <xhtml:link rel="alternate" hreflang="ms" href="https://datt.my/ms/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://datt.my/"/>
     <changefreq>hourly</changefreq>
   </url>

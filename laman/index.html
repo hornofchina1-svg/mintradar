@@ -7,7 +7,7 @@
 <meta name="description" content="Live radar of free NFT mints on BNB Chain: which contracts many wallets are minting right now, a safety check of each one, and what they later sell for.">
 <link rel="canonical" href="https://datt.my/">
 <link rel="alternate" hreflang="en" href="https://datt.my/">
-<link rel="alternate" hreflang="ms" href="https://datt.my/?lang=ms">
+<link rel="alternate" hreflang="ms" href="https://datt.my/ms/">
 <link rel="alternate" hreflang="x-default" href="https://datt.my/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MintRadar">
@@ -49,46 +49,78 @@
 </head>
 <body>
 <a class="langkau" href="#radar" data-t="langkau">Skip to the radar</a>
-<header class="kepala"><div class="lebar">
-  <a class="tanda" href="/" aria-label="MintRadar">
+<header class="kepala" id="atas"><div class="lebar kepala-dalam">
+  <a class="tanda" href="/" id="pautan-utama" aria-label="MintRadar">
     <svg class="tanda-ikon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="7"/><path d="M16 16 26 9"/></svg>
     <span>MintRadar</span>
   </a>
   <nav class="nav" aria-label="Sections">
     <a href="#radar" data-t="nav_radar">Radar</a>
     <a href="#peta" data-t="nav_peta">Minute by minute</a>
-    <a href="#token" data-t="nav_token">$MRADAR</a>
     <a href="#sebenar" data-t="nav_sebenar">Real results</a>
-    <a href="#semakan" data-t="nav_semakan">Safety check</a>
+    <a href="#token" data-t="nav_token">$MRADAR</a>
     <a href="/skill.md" data-t="nav_ejen">For agents</a>
   </nav>
-  <button class="bahasa" type="button" id="tukar-bahasa" data-t="bahasa_lain">Bahasa Melayu</button>
+  <a class="bahasa" id="tukar-bahasa" href="/ms/" hreflang="ms" lang="ms" data-pendek="BM" data-t="bahasa_lain">Bahasa Melayu</a>
+  <a class="cta" href="#periksa" data-t="cta_periksa">Check a contract</a>
+  <details class="menu" id="menu">
+    <summary aria-label="Menu"><span class="menu-garis" aria-hidden="true"></span><span data-t="menu">Menu</span></summary>
+    <nav class="menu-panel" aria-label="Menu">
+      <a href="#radar" data-t="nav_radar">Radar</a>
+      <a href="#peta" data-t="nav_peta">Minute by minute</a>
+      <a href="#periksa" data-t="cta_periksa">Check a contract</a>
+      <a href="#sebenar" data-t="nav_sebenar">Real results</a>
+      <a href="#token" data-t="nav_token">$MRADAR</a>
+      <a href="#cukai" data-t="cukai_tajuk">Where the tax goes</a>
+      <a href="/skill.md" data-t="nav_ejen">For agents</a>
+    </nav>
+  </details>
 </div></header>
 
-<main class="lebar">
-  <section class="pembuka">
-    <div class="pembuka-teks">
-      <h1 data-t="lead">MintRadar watches every NFT mint on BNB Chain as it happens.</h1>
-      <p class="kenyataan" data-t="kenyataan">These are measurements, not advice. Most free mints never find a buyer.</p>
-      <dl class="angka-utama" id="angka-utama">
-        <div><dt data-t="utama_percuma">free mints flagged, 24 h</dt><dd id="u-percuma">—</dd></div>
-        <div><dt data-t="utama_pembeli">found a buyer within 24 h</dt><dd id="u-pembeli">—</dd></div>
-        <div><dt data-t="utama_merah">unverified or red-flagged, 24 h</dt><dd id="u-merah">—</dd></div>
-      </dl>
-      <p class="segar" id="segar" aria-live="off"></p>
+<main>
+  <section class="pembuka" aria-labelledby="tajuk-utama">
+    <div class="medan" id="medan" aria-hidden="true">
+      <figure class="skop-radar" id="skop-sandaran">
+        <svg id="skop" viewBox="0 0 340 340" role="img" aria-labelledby="skop-ket">
+          <defs><radialGradient id="skop-latar"><stop offset="0" class="skop-dalam"/><stop offset="1" class="skop-luar"/></radialGradient></defs>
+          <circle cx="170" cy="170" r="160" fill="url(#skop-latar)" class="skop-gelang"/>
+          <circle cx="170" cy="170" r="110" class="skop-gelang"/>
+          <circle cx="170" cy="170" r="60" class="skop-gelang"/>
+          <path d="M170 10V330M10 170H330" class="skop-paksi"/>
+          <g class="skop-sapu"><path d="M170 170 L164.4 10.1 A160 160 0 0 1 268.5 43.9 Z" class="skop-jejak"/><path d="M170 170 L268.5 43.9" class="skop-garis"/></g>
+          <g id="skop-titik"></g>
+        </svg>
+        <figcaption id="skop-ket" data-t="skop_ket"></figcaption>
+      </figure>
+      <p class="medan-ket" id="medan-ket" hidden data-t="medan_ket"></p>
+      <div class="medan-tip" id="medan-tip" hidden></div>
     </div>
-    <figure class="skop-radar">
-      <svg id="skop" viewBox="0 0 340 340" role="img" aria-labelledby="skop-ket">
-        <defs><radialGradient id="skop-latar"><stop offset="0" class="skop-dalam"/><stop offset="1" class="skop-luar"/></radialGradient></defs>
-        <circle cx="170" cy="170" r="160" fill="url(#skop-latar)" class="skop-gelang"/>
-        <circle cx="170" cy="170" r="110" class="skop-gelang"/>
-        <circle cx="170" cy="170" r="60" class="skop-gelang"/>
-        <path d="M170 10V330M10 170H330" class="skop-paksi"/>
-        <g class="skop-sapu"><path d="M170 170 L164.4 10.1 A160 160 0 0 1 268.5 43.9 Z" class="skop-jejak"/><path d="M170 170 L268.5 43.9" class="skop-garis"/></g>
-        <g id="skop-titik"></g>
-      </svg>
-      <figcaption id="skop-ket" data-t="skop_ket"></figcaption>
-    </figure>
+    <div class="lebar pembuka-dalam">
+      <div class="pembuka-teks">
+        <h1 id="tajuk-utama" data-t="lead">Every free mint on BNB Chain, the moment it starts.</h1>
+        <p class="kenyataan" data-t="kenyataan">These are measurements, not advice. Most free mints never find a buyer.</p>
+        <dl class="angka-utama" id="angka-utama">
+          <div><dt data-t="utama_percuma">free mints flagged, 24 h</dt><dd id="u-percuma">—</dd></div>
+          <div><dt data-t="utama_pembeli">found a buyer within 24 h</dt><dd id="u-pembeli">—</dd></div>
+          <div><dt data-t="utama_merah">unverified or red-flagged, 24 h</dt><dd id="u-merah">—</dd></div>
+        </dl>
+        <p class="segar" id="segar" aria-live="off"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="lebar">
+  <section class="periksa" id="periksa" aria-labelledby="periksa-tajuk">
+    <h2 id="periksa-tajuk" data-t="periksa_tajuk">Check a contract before you mint or buy</h2>
+    <p class="ket" data-t="periksa_ket"></p>
+    <form class="periksa-borang" id="periksa-borang" role="search" novalidate>
+      <label for="periksa-alamat" data-t="periksa_label">Contract or token address on BNB Chain</label>
+      <div class="periksa-baris">
+        <input id="periksa-alamat" name="alamat" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="0x…" maxlength="42">
+        <button type="submit" class="cta" data-t="periksa_butang">Check</button>
+      </div>
+    </form>
+    <div class="periksa-hasil" id="periksa-hasil" aria-live="polite"></div>
   </section>
 
   <section class="skop" id="radar" aria-labelledby="kini-tajuk">
@@ -203,12 +235,30 @@
       <li data-t="had_3"></li>
     </ul>
   </section>
+  </div>
 </main>
 
 <footer class="kaki"><div class="lebar">
-  <p id="kaki-data" aria-live="polite"></p>
-  <p><a href="/skill.md" data-t="kaki_skill">For agents: check a contract before you mint (skill.md)</a></p>
-  <p><a href="https://boltbook.fun/u/sasaoff" rel="noopener" data-t="kaki_ejen">Built by sasaoff.ai on Boltbook</a></p>
+  <div class="kaki-grid">
+    <div class="kaki-jenama">
+      <a class="tanda" href="/" aria-label="MintRadar"><svg class="tanda-ikon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="7"/><path d="M16 16 26 9"/></svg><span>MintRadar</span></a>
+      <p data-t="kaki_ringkas">A read-only radar of free NFT mints on BNB Chain, with a safety check for every contract.</p>
+      <p id="kaki-data" aria-live="polite"></p>
+    </div>
+    <nav class="kaki-lajur" aria-labelledby="kaki-produk"><h2 id="kaki-produk" data-t="kaki_produk">Radar</h2>
+      <a href="#radar" data-t="nav_radar">Radar</a><a href="#peta" data-t="nav_peta">Minute by minute</a><a href="#periksa" data-t="cta_periksa">Check a contract</a><a href="#sebenar" data-t="nav_sebenar">Real results</a><a href="#token" data-t="nav_token">$MRADAR</a>
+    </nav>
+    <nav class="kaki-lajur" aria-labelledby="kaki-ejen"><h2 id="kaki-ejen" data-t="kaki_ejen_tajuk">For agents</h2>
+      <a href="/skill.md">skill.md</a><a href="/data/stats.json">stats.json</a><a href="/data/kontrak/index.json">kontrak/index.json</a><a href="https://github.com/hornofchina1-svg/mintradar" rel="noopener">GitHub</a>
+    </nav>
+    <nav class="kaki-lajur" aria-labelledby="kaki-komuniti"><h2 id="kaki-komuniti" data-t="kaki_komuniti">Community</h2>
+      <a href="https://boltbook.fun/u/sasaoff" rel="noopener" data-t="kaki_ejen">sasaoff.ai on Boltbook</a><a href="https://boltbook.fun/b/alpha" rel="noopener" data-t="kaki_alpha">Alpha board</a>
+    </nav>
+  </div>
+  <div class="kaki-bawah">
+    <p data-t="kaki_amaran">Measurements, not advice. Most free mints never find a buyer; check every contract yourself before you send anything.</p>
+    <p><span data-t="kaki_lesen">Code MIT, data CC BY 4.0.</span> <a href="/" hreflang="en" lang="en">English</a> · <a href="/ms/" hreflang="ms" lang="ms">Bahasa Melayu</a></p>
+  </div>
 </div></footer>
 <script src="/apl.js" defer></script>
 </body>

@@ -3,6 +3,7 @@ pemilihan/jual (enjin wang kekal peribadi — keputusan pemilik 29 Okt). Ditulis
 import html
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -186,11 +187,42 @@ def _lalu(ts, sekarang):
     return f"{m} min ago" if m < 90 else f"{round(m / 60)} h ago"
 
 
-def render_html(data, templat, bahasa):
-    """Isi jadual dalam HTML statik (EN) supaya pembaca tanpa JS (ejen yang curl laman) nampak data sebenar; apl.js
-    menulis semula selepas dimuat. Diukur 29 Okt: pengulas Boltbook melaporkan 'tabel demo kosong'."""
+LAMAN_URL = {"en": "https://datt.my/", "ms": "https://datt.my/ms/"}
+LOKAL = {"en": "en_GB", "ms": "ms_MY"}
+DATA_T = re.compile(r'(<[a-z0-9]+\b[^>]*\bdata-t="([a-z0-9_]+)"[^>]*>)([^<]*)(<)')
+
+
+def terjemah(out, t, lang):
+    """D43: dwibahasa SEBENAR — setiap elemen data-t diisi di pelayan (Google mengindeks / dan /ms/ berasingan), serta lang,
+    tajuk, meta, kanonik, og:* dan pautan tukar bahasa. Elemen data-t mesti mengandungi teks sahaja (tiada tag anak)."""
     e = html.escape
-    t = bahasa["en"]
+    out = DATA_T.sub(lambda m: m.group(1) + (e(t[m.group(2)]) if t.get(m.group(2)) else m.group(3)) + m.group(4), out)
+    lain = "ms" if lang == "en" else "en"
+    ganti = [
+        ('<html lang="en">', f'<html lang="{lang}">'),
+        ('<title>MintRadar</title>', f'<title>{e(t["tajuk_laman"])}</title>'),
+        ('<link rel="canonical" href="https://datt.my/">', f'<link rel="canonical" href="{LAMAN_URL[lang]}">'),
+        ('<meta property="og:url" content="https://datt.my/">', f'<meta property="og:url" content="{LAMAN_URL[lang]}">'),
+        ('<meta property="og:locale" content="en_GB">', f'<meta property="og:locale" content="{LOKAL[lang]}">'),
+        ('<meta property="og:locale:alternate" content="ms_MY">', f'<meta property="og:locale:alternate" content="{LOKAL[lain]}">'),
+        ('id="tukar-bahasa" href="/ms/" hreflang="ms" lang="ms" data-pendek="BM"',
+         f'id="tukar-bahasa" href="{"/ms/" if lang == "en" else "/"}" hreflang="{lain}" lang="{lain}" data-pendek="{lain.upper() if lain == "en" else "BM"}"'),
+    ]
+    for a, b in ganti:
+        out = out.replace(a, b)
+    out = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{e(t["meta_desc"])}">', out)
+    for k in ("og:title", "twitter:title"):
+        out = re.sub(rf'<meta (property|name)="{k}" content="[^"]*">', lambda m: f'<meta {m.group(1)}="{k}" content="{e(t["og_tajuk"])}">', out)
+    for k in ("og:description", "twitter:description"):
+        out = re.sub(rf'<meta (property|name)="{k}" content="[^"]*">', lambda m: f'<meta {m.group(1)}="{k}" content="{e(t["meta_desc"])}">', out)
+    return out
+
+
+def render_html(data, templat, bahasa, lang="en"):
+    """Isi jadual dalam HTML statik supaya pembaca tanpa JS (ejen yang curl laman) nampak data sebenar; apl.js
+    menulis semula selepas dimuat. Diukur 29 Okt: pengulas Boltbook melaporkan 'tabel demo kosong'. D43: satu halaman setiap bahasa."""
+    e = html.escape
+    t = bahasa[lang]
     sekarang = data["dijana"]
     def teks_temuan(x):
         return t["temuan_" + x["kod"]].replace("{fungsi}", (x["fungsi"] + "()") if x["fungsi"] else "")
@@ -240,17 +272,20 @@ def render_html(data, templat, bahasa):
         out = out.replace('<p id="semakan-baris" class="ket"></p>', f'<p id="semakan-baris" class="ket">{e(sb)}</p>')
     kaki = t["kaki_dijana"].replace("{masa}", masa).replace("{blok}", f"{data['blok']:,}")
     out = out.replace('<p id="kaki-data" aria-live="polite"></p>', f'<p id="kaki-data" aria-live="polite">{e(kaki)}</p>')
-    return out
+    return terjemah(out, t, lang)
 
 
 def render_laman(data, folder_laman):
-    """hidup/laman/index.html dijana semula daripada index.templat.html (salinan asal yang deploy.sh simpan)."""
+    """hidup/laman/index.html (EN) + hidup/laman/ms/index.html (BM) dijana semula daripada index.templat.html (salinan asal
+    yang deploy.sh simpan). D43: dwibahasa sebenar, satu URL setiap bahasa."""
     folder_laman = Path(folder_laman)
     templat = folder_laman / "index.templat.html"
     if not templat.exists():
         return False
     bahasa = json.loads((folder_laman / "bahasa.json").read_text())
-    sementara = folder_laman / ".index.html.tmp"
-    sementara.write_text(render_html(data, templat.read_text(), bahasa))
-    os.replace(sementara, folder_laman / "index.html")
+    for lang, sasaran in (("en", folder_laman / "index.html"), ("ms", folder_laman / "ms" / "index.html")):
+        sasaran.parent.mkdir(exist_ok=True)
+        sementara = sasaran.parent / ".index.html.tmp"
+        sementara.write_text(render_html(data, templat.read_text(), bahasa, lang))
+        os.replace(sementara, sasaran)
     return True
