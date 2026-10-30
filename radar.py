@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-from radar import awam, db, isi_belakang, laporan, semak
+from radar import awam, db, isi_belakang, laporan, pasaran, semak
 from radar.imbas import Pengimbas
 from radar.rpc import Rpc
 
@@ -60,6 +60,10 @@ def main(argv):
                         (a, int(time.time()), h["label"], json.dumps(h["temuan"]), json.dumps(h["admin"]), h.get("nama_kontrak")))
             con.commit()
             print(" ", a, h["label"], h.get("nama_kontrak"), [(x["kod"], x["fungsi"]) for x in h["temuan"]][:5])
+            p = pasaran.semak_token(a, c["pasaran"], rpc)  # market check for BEP-20 tokens: honeypot, tax, holders, bot volume, same-block buyers
+            if p:
+                db.simpan_pasaran(con, a, p, int(time.time()))
+                print("    market", p["label"], p["ringkas"], [(x["kod"], x["nilai"]) for x in p["temuan"]])
     elif arahan == "laporan":
         teks = laporan.tulis(con, c, int(time.time()))
         print(teks)

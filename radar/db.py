@@ -1,4 +1,5 @@
 """SQLite di state/ (atau $MINTRADAR_STATE untuk ujian)."""
+import json
 import os
 import sqlite3
 from pathlib import Path
@@ -16,9 +17,17 @@ CREATE TABLE IF NOT EXISTS jualan (alamat TEXT, tx TEXT, ts INTEGER, harga_bnb R
 CREATE TABLE IF NOT EXISTS penerima (alamat TEXT, penerima TEXT, minit_ts INTEGER, PRIMARY KEY (alamat, penerima));
 CREATE INDEX IF NOT EXISTS penerima_ts ON penerima (alamat, minit_ts);
 CREATE TABLE IF NOT EXISTS semakan (alamat TEXT PRIMARY KEY, ts INTEGER, label TEXT, temuan TEXT, admin TEXT, nama_kontrak TEXT);
+CREATE TABLE IF NOT EXISTS pasaran (alamat TEXT PRIMARY KEY, ts INTEGER, label TEXT, temuan TEXT, ringkas TEXT, bundle TEXT);
 CREATE INDEX IF NOT EXISTS minit_ts ON minit (minit_ts);
 CREATE INDEX IF NOT EXISTS kontrak_panas ON kontrak (ts_panas);
 """
+
+
+def simpan_pasaran(con, alamat, p, ts):
+    """D34: hasil radar/pasaran.semak_token → API datt.my (bahagian "market")."""
+    con.execute("INSERT OR REPLACE INTO pasaran VALUES (?,?,?,?,?,?)",
+                (alamat, ts, p["label"], json.dumps(p["temuan"]), json.dumps(p["ringkas"]), json.dumps(p.get("bundle"))))
+    con.commit()
 
 
 def folder_state():
